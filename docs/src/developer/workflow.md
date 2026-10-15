@@ -5,6 +5,58 @@ Use a branch from `main`, preserve unrelated/staged changes, and inspect
 Computational compatibility stays at PSI 0.34.x unless a separate upgrade is
 approved.
 
+## Local development cycle
+
+Run the following from the **repository root in PowerShell**. Use a compatible
+Julia installation (1.10+); if multiple versions are installed with Juliaup,
+replace `julia` with `julia +1.11` to select the documentation CI's minor version.
+
+### Step 1: Format
+
+Format Julia source and Markdown using the repository script:
+
+```powershell
+julia -e 'include(joinpath("scripts", "formatter", "formatter_code.jl"))'
+git diff --check
+git diff --stat
+```
+
+The formatter activates its own environment and modifies the entire checkout.
+Review changes before staging; preserve unrelated local work. See
+[Formatting](#Formatting) for scope and configuration.
+
+### Step 2: Test
+
+Test the affected behavior. For example, select the membership and HVDC
+regressions:
+
+```powershell
+julia --project=. -e 'using Pkg; Pkg.test(; test_args=["test_component_assignment", "test_hvdc"])'
+```
+
+Use `julia --project=. -e 'using Pkg; Pkg.test()'` to run all enabled test
+files. Both commands also run the configured Aqua checks; reserve-deliverability
+tests remain disabled. See [Tests](#Tests) for the regression-selection table.
+
+### Step 3: Prebuild and preview
+
+Prebuild and preview the documentation without deploying:
+
+```powershell
+julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); Pkg.status()'
+julia --project=docs docs\make.jl
+Start-Process .\docs\build\index.html
+```
+
+The strict build executes the tutorial and checks documented exports and
+references. Open the generated site to check navigation, diagrams, and both
+themes. Keep `DOCS_DEPLOY` unset; deployment is a separate authorized action.
+See [Build documentation locally](#Build-documentation-locally) for details.
+
+Record commands, Julia/package versions, outcomes, and any unverified checks in
+the PR. Formatting, passing model tests, and an HTML build verify different
+surfaces; none substitutes for the others.
+
 ## Build documentation locally
 
 From the repository root in PowerShell:

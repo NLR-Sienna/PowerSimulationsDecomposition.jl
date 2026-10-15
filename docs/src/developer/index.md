@@ -5,6 +5,21 @@ the [workflow](workflow.md) before selecting checks. Computational behavior live
 in Julia source and tests; this manual is not a substitute for verifying the
 resolved PowerSimulations 0.34.x interfaces.
 
+## Run the local development checks
+
+Start from the repository root in PowerShell with Julia 1.10+ (the documentation
+CI uses Julia 1.11). The [local development cycle](workflow.md#Local-development-cycle)
+provides a copyable runbook:
+
+| Task                            | Instructions                                                                                                 |
+|:------------------------------- |:------------------------------------------------------------------------------------------------------------ |
+| Format Julia and Markdown       | [Run the repository formatter](workflow.md#Formatting); it modifies files across the checkout                |
+| Run regression tests            | [Run all tests or select test files](workflow.md#Tests), including the runner's Aqua checks                  |
+| Prebuild and preview the manual | [Build documentation locally](workflow.md#Build-documentation-locally); the build also executes the tutorial |
+
+Inspect the resulting diff before committing. A successful local prebuild does
+not deploy the manual or prove that remote CI passed.
+
 ## Repository map
 
 Paths below are relative to the repository root.

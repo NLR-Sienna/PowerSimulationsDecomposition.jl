@@ -3,6 +3,54 @@
 The package relies on Julia multiple dispatch to extend PSI and InfrastructureSystems
 interfaces. It does not wrap PSI in an independent simulation framework.
 
+## Architecture at a glance
+
+```mermaid
+flowchart TD
+    SYS["PowerSystems System: components, forecasts, memberships"]
+    T["MultiProblemTemplate: base and regional templates"]
+    D["PSI DecisionModel of MultiRegionProblem"]
+    I["ISOPT ModelInternal"]
+    C["MultiOptimizationContainer"]
+    R["Regional PSI containers: one JuMP model per subsystem"]
+    M["main_problem: PSI container, not a coordinator"]
+    J["Joint numeric stores and regional bus maps"]
+    E["Network, branch, and device construction extensions"]
+    A["SequentialAlgorithm"]
+    S["PSI simulation state and result storage"]
+    SYS -.->|data and explicit membership| D
+    T -.->|copied and finalized configuration| D
+    D -->|owns| I
+    I -->|owns optimization container| C
+    C -->|owns subproblems| R
+    C -->|owns| M
+    C -->|owns| J
+    E -.->|build calls using PSI dispatch| R
+    A -.->|solve calls once per execution| R
+    R -.->|copy values after all solves succeed| J
+    J -.->|values for storage and state updates| S
+    S -.->|baseline parameter updates in simulations| R
+```
+
+Solid arrows show **ownership**; dashed arrows show labeled **calls or data
+transfers**, not ownership. `PSI` denotes PowerSimulations and `ISOPT` denotes
+InfrastructureSystems' optimization interfaces. Regional containers own the
+actual optimization models. The main container and joint numeric stores do not
+form a central coordinating optimization problem.
+
+The state-update arrow applies only when PSI runs the model in a simulation.
+It is not a regional convergence loop: each execution solves every region once,
+then aggregates results. Initialization sets the input System to `SYSTEM_BASE`;
+state-estimation injections and flows use that System's per-unit base.
+
+Trace the ownership nodes to `multiproblem_template.jl`,
+`multi_optimization_container.jl`, and `problems/multi_region_problem.jl`;
+construction dispatch to `models/network_models.jl` and `models/branch_models.jl`;
+and solve/copy calls to `algorithms/sequential_algorithm.jl`. The
+[repository map](index.md) describes these files. For chronological execution
+rather than ownership, see [Split-area modeling](../explanation/decomposition.md)
+and the separate [state-passing sequences](../explanation/state_passing.md).
+
 ## Construction and ownership
 
  1. `MultiProblemTemplate` stores a base `PSI.ProblemTemplate` and a dictionary of
