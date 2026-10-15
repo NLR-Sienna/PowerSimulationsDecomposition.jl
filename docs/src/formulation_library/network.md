@@ -86,9 +86,11 @@ they are not reoptimized locally.
 ## StaticBranchUnboundedStateEstimation
 
 This exported branch formulation has concrete construction methods for
-`MonitoredLine` with a PSI `AbstractPTDFModel`. It adds a
-`StateEstimationFlows` parameter and a `PTDFBranchFlow` expression. Source:
-`models/branch_models.jl`.
+`MonitoredLine` with a PSI `AbstractPTDFModel`, but also requires the
+`StateEstimationInjections` store created by `SplitAreaPTDFPowerModel`.
+Ordinary PSI PTDF network models do not create that store automatically.
+The branch formulation adds a `StateEstimationFlows` parameter and a
+`PTDFBranchFlow` expression. Source: `models/branch_models.jl`.
 
 For each modeled monitored line, the reconstructed expression is:
 
