@@ -1,15 +1,96 @@
 # PowerSimulationsDecomposition.jl
 
-[![Main - CI](https://github.com/NREL-Sienna/PowerSimulationsDecomposition.jl/workflows/Main%20-%20CI/badge.svg)](https://github.com/NREL-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/main-tests.yml)
-[![codecov](https://codecov.io/gh/NREL-Sienna/PowerSimulationsDecomposition.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL-Sienna/PowerSimulationsDecomposition.jl)
-[![Documentation Build](https://github.com/NREL-Sienna/PowerSimulationsDecomposition.jl/workflows/Documentation/badge.svg?)](https://nrel-sienna.github.io/PowerSimulationsDecomposition.jl/stable)
-[<img src="https://img.shields.io/badge/slack-@Sienna/PSIDec-sienna.svg?logo=slack">](https://join.slack.com/t/nrel-sienna/shared_invite/zt-glam9vdu-o8A9TwZTZqqNTKHa7q3BpQ)
-[![PowerSimulationsDecomposition.jl Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/PowerSimulationsDecomposition)](https://pkgs.genieframework.com?packages=PowerSimulationsDecomposition)
+[![Main - CI](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/main-tests.yml/badge.svg?branch=main)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/main-tests.yml)
+[![codecov](https://codecov.io/gh/NLR-Sienna/PowerSimulationsDecomposition.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/NLR-Sienna/PowerSimulationsDecomposition.jl)
+[![Documentation](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/docs.yml/badge.svg)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/docs.yml)
+[![Community](https://img.shields.io/badge/community-Sienna-sienna.svg?logo=github)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/issues)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FPowerSimulationsDecomposition&query=total_requests&label=Downloads)](https://juliapkgstats.com/api/v1/total_downloads/PowerSimulationsDecomposition)
+
+`PowerSimulationsDecomposition.jl` extends
+[PowerSimulations.jl](https://github.com/Sienna-Platform/PowerSimulations.jl)
+with subsystem-filtered, multi-region optimization models for power-system
+operations research. [PowerSystems.jl](https://github.com/Sienna-Platform/PowerSystems.jl)
+owns system data and named subsystem membership; PowerSimulations owns the modeling,
+simulation, chronology, and result interfaces.
+
+## Functionality and limits
+
+- Define a `MultiProblemTemplate` and build a `DecisionModel(MultiRegionProblem, ...)`
+  containing one optimization container per named subsystem.
+- Model split-area PTDF balances with state-estimation injections and optional
+  monitored-line state-estimation flows.
+- Execute regional solves sequentially and expose aggregated results through
+  PowerSimulations.
+- Pass state between full-system and regional stages, or between successive regional
+  executions, with an optional full-system emulator.
+
+This is research software, **not an automatic partitioner or an iterative
+convergence algorithm**. The MPI (Message Passing Interface) execution path is
+incomplete. MPI is a standard for communication between processes in parallel
+programs; its presence here does not imply supported parallel execution.
+Modeled HVDC terminal
+buses must belong to the same subsystem. Overlapping result axes and sparse arrays
+have aggregation limitations; reserve-deliverability tests are disabled.
+See [supported behavior and limitations](docs/src/api/support.md).
+
+## Installation
+
+Use Julia **1.10 or newer** for the compatible PowerSimulations 0.34.x environment.
+The root project declares a broader Julia lower bound, but resolved dependencies
+can require a newer runtime. Do not substitute current PowerSimulations `main`
+for the compatible dependency.
+
+For a source checkout:
+
+```powershell
+git clone https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl.git
+Set-Location PowerSimulationsDecomposition.jl
+julia --project=. -e 'using Pkg; Pkg.instantiate(); using PowerSimulationsDecomposition'
+```
+
+From an existing Julia environment, install from the repository:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl.git")
+using PowerSimulationsDecomposition
+```
+
+These commands use the default branch. When working on a particular branch,
+check it out before instantiating.
+
+## Usage and documentation
+
+Start with the [setup guide](docs/src/quick_start_guide.md) and the
+[runnable two-region tutorial](docs/src/tutorials/intro_page.md). The tutorial uses
+HiGHS and a small PowerSystemCaseBuilder fixture; both are declared in the docs
+environment.
+
+```powershell
+julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+julia --project=docs docs\examples\decomposition.jl
+```
+
+- [User manual](docs/src/index.md): tutorials, how-to guides, and explanations.
+- [Formulation library](docs/src/formulation_library/network.md): the mathematical
+  contracts owned by this package.
+- [Public API](docs/src/api/public.md) and [internal extensions](docs/src/api/internal.md).
+- [Developer guide](docs/src/developer/index.md): architecture, tests, and local docs builds.
+
+The documentation badge links to the build workflow, not a published manual.
+No stable/dev GitHub Pages site was available when these links were checked.
+Use the repository pages above or [build the manual locally](docs/src/developer/workflow.md).
 
 ## Development
 
-Contributions to the development and enahancement of PowerSimulationsDecomposition.jl are welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-Sienna/PowerSimulationsDecomposition.jl/blob/master/CONTRIBUTING.md) for code contribution guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution
+procedures and use [repository issues](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/issues)
+for questions and bug reports. The default branch is `main`.
 
 ## License
 
-PowerSimulationsDecomposition.jl is released under a BSD [license](https://github.com/NREL/PowerSimulationsDecomposition/blob/master/LICENSE). PowerSimulationsDecomposition.jl has been developed as part of the Interregional Transmission Operational Coordination (IRTOC) under GDO 20 at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/))
+PowerSimulationsDecomposition.jl is released under the [BSD 3-Clause license](LICENSE).
+Development includes work on Interregional Transmission Operational Coordination
+(IRTOC), under GDO 20. The laboratory's current name is
+[National Laboratory of the Rockies (NLR)](https://www.nlr.gov/).
+Historical copyright and legal attribution are retained in the license.

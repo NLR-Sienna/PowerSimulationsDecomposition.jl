@@ -1,6 +1,17 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+PowerSimulations = "e690365d-45e2-57bb-ac84-44ba829e73c4"
+PowerSimulationsDecomposition = "bed98974-b02a-5e2f-9ee0-a103f5c450dd"
+PowerSystemCaseBuilder = "f00506e0-b84f-492a-93c2-c0a9afc4364e"
+PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 
 [compat]
 Documenter = "0.27"
-julia = "^1.6"
+HiGHS = "1"
+JuMP = "1"
+PowerSimulations = "0.34"
+PowerSystemCaseBuilder = "2"
+PowerSystems = "5.3"
+julia = "1.10"

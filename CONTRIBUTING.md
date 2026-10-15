@@ -1,6 +1,25 @@
 # Contributing
 
-Community driven development of this package is encouraged. To maintain code quality standards, please adhere to the following guidlines when contributing:
- - To get started, <a href="https://www.clahub.com/agreements/NREL/PowerSimulationsDecomposition.jl">sign the Contributor License Agreement</a>.
- - Please do your best to adhere to our [coding style guide](docs/src/developer/style.md).
- - To submit code contributions, [fork](https://help.github.com/articles/fork-a-repo/) the repository, commit your changes, and [submit a pull request](https://help.github.com/articles/creating-a-pull-request-from-a-fork/).
+Community contributions are welcome.
+
+1. Discuss modeling changes or report a reproducible bug in
+   [an issue](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/issues).
+   Include Julia/package versions, subsystem assignments, formulation names,
+   chronology, and relevant logs, without confidential system data.
+2. Fork the repository and create a branch from `main`. Preserve computational
+   compatibility, particularly PowerSimulations 0.34.x; do not upgrade dependencies
+   simply to match newer documentation.
+3. Follow the [local style guide](docs/src/developer/style.md) and
+   [development workflow](docs/src/developer/workflow.md). Add behavior-focused
+   regression tests and update the affected documentation.
+4. Run the relevant checks and report their exact commands and results, including
+   missing test dependencies or other blockers.
+5. Submit a pull request against `main` using the
+   [pull request template](.github/pull_request_template.md). Explain physical
+   assumptions, numerical tolerances, and any changes in supported behavior.
+
+The previous contribution instructions referenced a
+[legacy CLA service](https://www.clahub.com/agreements/NREL/PowerSimulationsDecomposition.jl).
+That endpoint could not be verified. Ask the maintainers in your issue or pull
+request for the current contributor-agreement process before merging; do not
+assume that a broken endpoint waives an agreement requirement.
