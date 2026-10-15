@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-  - Use Julia **1.10+**; the documentation workflow uses Julia 1.11.
+  - Use Julia **1.10+**; the documentation workflow tracks the latest stable
+    Julia 1.x release using `setup-julia`'s `version: '1'` selector.
     Although the root project permits Julia 1.6, compatible resolved dependencies
     impose newer requirements. In particular, PSI 0.34.2 requires Julia 1.10.
   - Know PowerSystems components, named subsystems, deterministic forecasts, and

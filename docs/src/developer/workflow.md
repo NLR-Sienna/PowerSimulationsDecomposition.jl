@@ -8,8 +8,11 @@ approved.
 ## Local development cycle
 
 Run the following from the **repository root in PowerShell**. Use a compatible
-Julia installation (1.10+); if multiple versions are installed with Juliaup,
-replace `julia` with `julia +1.11` to select the documentation CI's minor version.
+Julia installation (1.10+). CI selects the latest stable Julia 1.x release with
+`setup-julia`'s `version: '1'`, not a fixed minor version or the literal string
+`latest`. With Juliaup's release channel installed and up to date, use
+`julia +release` to select the current stable release locally. Record the actual
+Julia version in validation reports because the CI selection advances over time.
 
 ### Step 1: Format
 
