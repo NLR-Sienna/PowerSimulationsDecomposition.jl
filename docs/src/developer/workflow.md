@@ -98,15 +98,65 @@ three valid.
 ### CI and deployment
 
 The documentation workflow builds on PRs and pushes to `main`, release branches,
-and tags, then uploads the HTML site as an artifact. It does **not** deploy.
-Build-only checks need no write credentials.
+and tags, then uploads the HTML site as an artifact. It also supports manual
+execution. Build-only checks need no write credentials.
 
 `docs/make.jl` retains an opt-in `DOCS_DEPLOY=true` path for authorized
 maintainers, targeting `github.com/NLR-Sienna/PowerSimulationsDecomposition.jl.git`,
 `gh-pages`, development branch `main`, development URL `dev`, and tagged
-`stable`/version URLs. Previews are disabled. Enabling this is a publication
-action requiring repository credentials and configured GitHub Pages, not a
-normal local validation command. No existing stable/dev site is assumed.
+`stable`/version URLs. The workflow enables that path **only** when the repository
+Actions variable `DOCS_DEPLOY` equals `true`, for pushes or manual runs on `main`
+or version tags beginning with `v`. PRs and release branches never deploy.
+Previews are disabled. The deploy step explicitly fails if enabled without its
+required `DOCUMENTER_KEY` secret.
+
+#### One-time administrator setup
+
+The deployment audit found Pages disabled and no `gh-pages` branch. The account
+performing that audit had push permission, not repository-administration
+permission. The following steps require a repository administrator:
+
+ 1. Generate a dedicated SSH deployment key using the
+    [Documenter 0.27 SSH-key instructions](https://documenter.juliadocs.org/v0.27/man/hosting/#Authentication:-SSH-Deploy-Keys).
+    Generate and handle the private key locally; never paste it into an issue,
+    PR, source file, or build log.
+ 2. In **Settings > Deploy keys**, add the public key with **Allow write access**.
+    In **Settings > Secrets and variables > Actions > Secrets**, add the
+    base64-encoded private key as the repository secret `DOCUMENTER_KEY`.
+    The existing TagBot workflow also references that secret, so check its
+    current configuration before replacing any existing key.
+ 3. In **Settings > Secrets and variables > Actions > Variables**, create the
+    repository variable `DOCS_DEPLOY` with the exact value `true`. Leave it
+    unset or set to `false` to keep documentation builds artifact-only.
+ 4. Merge the reviewed documentation changes into `main`. Its push workflow
+    builds the manual and deploys the versioned files, creating `gh-pages`.
+    To retry after setup without another commit, select **Actions >
+    Documentation > Run workflow > main**.
+ 5. After the first deployment creates `gh-pages`, open **Settings > Pages**.
+    Set **Source** to **Deploy from a branch**, choose **gh-pages** and **/(root)**,
+    and save. Do not choose the separate GitHub Actions Pages-artifact source:
+    this workflow uses Documenter's SSH push to a branch, not `deploy-pages`.
+ 6. Verify the Documentation run and GitHub Pages publishing run both succeed.
+    Open `https://nlr-sienna.github.io/PowerSimulationsDecomposition.jl/dev/`
+    and check navigation, tutorial output, and the rendered Mermaid diagrams.
+    This is an expected destination after setup, not a claim that it is already
+    published.
+ 7. For stable documentation, publish an appropriate version tag (for example,
+    `v0.1.0` only if that release is intended). The tag must include the docs
+    workflow and build configuration. Documenter creates the version and
+    `stable` aliases on deployment; `stable/` is not expected before a release.
+    TagBot already uses `DOCUMENTER_KEY` so its tag pushes can trigger workflows.
+
+The equivalent manual workflow command is:
+
+```powershell
+gh workflow run docs.yml --repo NLR-Sienna/PowerSimulationsDecomposition.jl --ref main
+```
+
+The normal local prebuild never sets `DOCS_DEPLOY`. Enabling publication is
+separate from validating an HTML build. If deployment fails, inspect its logs
+for authentication or repository-policy errors instead of granting broad
+personal-token permissions. Keep the SSH key scoped to this repository.
 
 ## Tests
 

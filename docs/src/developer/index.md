@@ -76,7 +76,7 @@ versions. Record resolved versions when reporting numerical regressions.
 |:------------------------ |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `main-tests.yml`         | Main-branch/scheduled tests on Linux, Windows, macOS with stable/nightly Julia; coverage upload. GitHub reported it disabled for inactivity during documentation investigation. |
 | `pr_testing.yml`         | PR test matrix and coverage                                                                                                                                                     |
-| `docs.yml`               | Julia 1.11 docs build, executable tutorial, uploaded HTML artifact; no automatic deployment                                                                                     |
+| `docs.yml`               | Julia 1.11 docs build, executable tutorial, HTML artifact; opt-in main/version deployment after administrator setup                                                             |
 | `format-check.yml`       | Run formatter and fail on a nonempty diff; PR suggestions                                                                                                                       |
 | `cross-package-test.yml` | Legacy downstream checks; push trigger still uses `master`, old owner references, and allows incompatibility failures. Not evidence of full cross-package support.              |
 | `TagBot.yml`             | TagBot on authorized issue-comment/manual events; uses repository credentials                                                                                                   |
