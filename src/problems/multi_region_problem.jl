@@ -1,3 +1,15 @@
+"""
+    MultiRegionProblem
+
+Select sequential regional construction and execution in a PowerSimulations model.
+
+Construct the model with
+`PSI.DecisionModel(MultiRegionProblem, template, sys; kwargs...)`, where `template`
+is a [`MultiProblemTemplate`](@ref). The model uses one PSI optimization container
+per subsystem and joins dense results for PSI storage. It does not perform an
+iterative coordination solve. The constructor selects the internal
+`SequentialAlgorithm`; MPI (Message Passing Interface) execution is incomplete.
+"""
 struct MultiRegionProblem <: PSI.DecisionProblem end
 
 function PSI.DecisionModel{MultiRegionProblem}(

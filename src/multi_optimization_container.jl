@@ -1,3 +1,14 @@
+"""
+    MultiOptimizationContainer(algorithm, sys, settings, time_series_type, subproblem_keys)
+
+Create the internal regional PSI containers and joint optimization stores.
+
+The algorithm argument is a concrete `DecompositionAlgorithm` type. Each key
+identifies a regional container; bus maps are populated during the build.
+The System must provide a single time-series resolution and the time-series type
+must be concrete. Initialization sets the System's units to `SYSTEM_BASE`.
+The main container is not a solved central coordination problem.
+"""
 Base.@kwdef mutable struct MultiOptimizationContainer{T <: DecompositionAlgorithm} <:
                            ISOPT.AbstractOptimizationContainer
     main_problem::PSI.OptimizationContainer
