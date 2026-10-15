@@ -1,3 +1,14 @@
+"""
+    MultiProblemTemplate(base_template::PSI.ProblemTemplate, problem_keys::Vector{String})
+    MultiProblemTemplate(network::PSI.NetworkModel, problem_keys::Vector{String})
+
+Create a base template and a deep-copied regional template for each subsystem key.
+
+Use PowerSimulations' model setters to configure the templates. Keys identify
+existing PowerSystems named subsystems; this constructor does not assign
+components or infer a partition. DecisionModel construction copies and finalizes
+the templates, removing empty regional device and branch models.
+"""
 struct MultiProblemTemplate <: PSI.AbstractProblemTemplate
     base_template::PSI.ProblemTemplate
     sub_templates::Dict{String, PSI.ProblemTemplate}
