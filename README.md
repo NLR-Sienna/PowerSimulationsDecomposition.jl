@@ -41,10 +41,6 @@ Use Julia **1.10 or newer**. The dependency upgrade targets PowerSimulations
 unreleased dependency checkouts. Declared version bounds do not by themselves
 establish runtime compatibility; run the test suite when upgrading.
 
-Upgrade validation: all 281 enabled test assertions pass, but the strict
-documentation build fails in module-isolated template finalization. See the
-[diagnosis and fix plan](docs/dependency-upgrade-fix-plan.md) before treating
-the new dependency baseline as fully validated.
 
 For a source checkout:
 
