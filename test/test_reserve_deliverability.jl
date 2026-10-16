@@ -5,17 +5,22 @@ function add_outages_to_systems!(
         @NamedTuple{
             outage_generators::Vector{String},
             responding_reserves::Dict{DataType, String},
+            monitored_components::Vector{String},
         }
     },
 )
     for outage_specification in outage_specifications
         outage_generators = outage_specification.outage_generators
         responding_reserves = outage_specification.responding_reserves
-        transition_data = GeometricDistributionForcedOutage(;
-            mean_time_to_recovery=10,  # Units of hours - This value does not have any influence for G-1 formulation
-            outage_transition_probability=1.0,
-        )
         for sys in systems
+            transition_data = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery=10.0,
+                outage_transition_probability=1.0,
+                monitored_components=[
+                    get_component(ACTransmission, sys, name) for
+                    name in outage_specification.monitored_components
+                ],
+            )
             for gen_name in outage_generators
                 gen = get_component(PSY.Generator, sys, gen_name)
                 add_supplemental_attribute!(sys, gen, transition_data)
@@ -35,7 +40,7 @@ function _get_reserve_name_for_results(reserve_type::DataType, reserve_name::Str
     return "__" * string(a) * "__" * string(b) * "__" * string(c)
 end
 
-@testset "10 bus; RampReserveWithDeliverabilityConstraints + AreaPTDFPowerModel (reference): separate reserves" begin
+@testset "10 bus; SecurityConstrainedRampReserve + AreaPTDFPowerModel (reference): separate reserves" begin
     sys = build_system(PSISystems, "two_area_pjm_DA"; add_reserves=true)
     # Make feasible by ignoring ramp limits: 
     for g in get_components(ThermalStandard, sys)
@@ -54,14 +59,17 @@ end
         (min=1.0, max=2.0),
     )
 
+    monitored_branch_names = get_name.(collect(get_components(ACTransmission, sys)))
     outages_specifications = [
         (
             outage_generators=["Sundance_1"],
             responding_reserves=Dict(PSY.VariableReserve{ReserveUp} => "Reserve1_1"),
+            monitored_components=monitored_branch_names,
         )
         (
             outage_generators=["Sundance_2"],
             responding_reserves=Dict(PSY.VariableReserve{ReserveUp} => "Reserve1_2"),
+            monitored_components=monitored_branch_names,
         )
     ]
     add_outages_to_systems!([sys], outages_specifications)
@@ -75,7 +83,7 @@ end
         template,
         ServiceModel(
             VariableReserve{ReserveUp},
-            RampReserveWithDeliverabilityConstraints,
+            SecurityConstrainedRampReserve,
             "Reserve1_1",
         ),
     )
@@ -83,7 +91,7 @@ end
         template,
         ServiceModel(
             VariableReserve{ReserveUp},
-            RampReserveWithDeliverabilityConstraints,
+            SecurityConstrainedRampReserve,
             "Reserve1_2",
         ),
     )
@@ -134,12 +142,38 @@ end
         res,
         "PostContingencyBranchFlow__VariableReserve__ReserveUp__Reserve1_2",
     )
+    outage_ids = Dict(
+        reserve_name => string(
+            IS.get_uuid(
+                only(
+                    get_supplemental_attributes(
+                        GeometricDistributionForcedOutage,
+                        get_component(VariableReserve{ReserveUp}, sys, reserve_name),
+                    ),
+                ),
+            ),
+        ) for reserve_name in ["Reserve1_1", "Reserve1_2"]
+    )
+    @test Set(unique(post_contingency_flows_1.name)) ==
+          Set(outage_ids["Reserve1_1"] * "__" * name for name in monitored_branch_names)
+    @test Set(unique(post_contingency_flows_2.name)) ==
+          Set(outage_ids["Reserve1_2"] * "__" * name for name in monitored_branch_names)
     for line_name in get_name.(get_components(Line, sys))
         flow = flows[:, line_name]
-        post_contingency_flow_1 =
-            filter(row -> row.name2 == line_name, post_contingency_flows_1)[:, :value]
-        post_contingency_flow_2 =
-            filter(row -> row.name2 == line_name, post_contingency_flows_2)[:, :value]
+        post_contingency_flow_1 = filter(
+            row -> row.name == outage_ids["Reserve1_1"] * "__" * line_name,
+            post_contingency_flows_1,
+        )[
+            :,
+            :value,
+        ]
+        post_contingency_flow_2 = filter(
+            row -> row.name == outage_ids["Reserve1_2"] * "__" * line_name,
+            post_contingency_flows_2,
+        )[
+            :,
+            :value,
+        ]
         # Post contingency flow in the area of the outage is different, post contingency flow from the other area is the same:
         if occursin("_1", line_name)
             @test all(isapprox.(flow, post_contingency_flow_2))
@@ -151,7 +185,7 @@ end
     end
 end
 
-@testset "10 bus; RampReserveWithDeliverabilityConstraints + SplitAreaPTDFPowerModel: separate reserves" begin
+@testset "10 bus; SecurityConstrainedRampReserve + SplitAreaPTDFPowerModel: separate reserves" begin
     sys = build_system(PSISystems, "two_area_pjm_DA"; add_reserves=true)
     # Make feasible by ignoring ramp limits: 
     for g in get_components(ThermalStandard, sys)
@@ -170,14 +204,29 @@ end
         (min=1.0, max=2.0),
     )
 
+    monitored_branches_by_area = Dict(
+        area_name =>
+            get_name.(
+                collect(
+                    get_components(
+                        branch ->
+                            get_name(get_area(get_from(get_arc(branch)))) == area_name,
+                        ACTransmission,
+                        sys,
+                    ),
+                )
+            ) for area_name in ["Area1", "Area2"]
+    )
     outages_specifications = [
         (
             outage_generators=["Sundance_1"],
             responding_reserves=Dict(PSY.VariableReserve{ReserveUp} => "Reserve1_1"),
+            monitored_components=monitored_branches_by_area["Area1"],
         )
         (
             outage_generators=["Sundance_2"],
             responding_reserves=Dict(PSY.VariableReserve{ReserveUp} => "Reserve1_2"),
+            monitored_components=monitored_branches_by_area["Area2"],
         )
     ]
     add_outages_to_systems!([sys], outages_specifications)
@@ -209,7 +258,7 @@ end
         template,
         ServiceModel(
             VariableReserve{ReserveUp},
-            RampReserveWithDeliverabilityConstraints,
+            SecurityConstrainedRampReserve,
             "Reserve1_1",
         ),
         "a",
@@ -218,7 +267,7 @@ end
         template,
         ServiceModel(
             VariableReserve{ReserveUp},
-            RampReserveWithDeliverabilityConstraints,
+            SecurityConstrainedRampReserve,
             "Reserve1_2",
         ),
         "b",
@@ -293,11 +342,12 @@ end
     end
 end
 
-@testset "RTS multi-stage sim w/ RampReserveWithDeliverabilityConstraints and SplitAreaPTDFPowerModel" begin
+@testset "RTS multi-stage sim w/ SecurityConstrainedRampReserve and SplitAreaPTDFPowerModel" begin
     sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     outages_specifications = [(
         outage_generators=["313_CC_1"],
         responding_reserves=Dict(PSY.VariableReserve{ReserveUp} => "Spin_Up_R3"),
+        monitored_components=["CA-1", "A28"],
     )]
     add_outages_to_systems!([sys], outages_specifications)
     results, sim = run_rts_multi_stage_decomposition_simulation(

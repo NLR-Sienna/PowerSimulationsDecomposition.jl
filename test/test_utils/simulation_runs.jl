@@ -59,7 +59,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R1",
             ),
         )
@@ -67,7 +67,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R2",
             ),
         )
@@ -75,7 +75,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R3",
             ),
         )
@@ -122,7 +122,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc2,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R1",
             ),
             "a",
@@ -131,7 +131,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc2,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R2",
             ),
             "b",
@@ -140,7 +140,7 @@ function run_rts_multi_stage_decomposition_simulation(
             template_uc2,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RampReserveWithDeliverabilityConstraints,
+                SecurityConstrainedRampReserve,
                 "Spin_Up_R3",
             ),
             "a",
