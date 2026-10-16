@@ -2,8 +2,9 @@
 
 Use a branch from `main`, preserve unrelated/staged changes, and inspect
 `Project.toml`, the active manifest, source, tests, and workflows before editing.
-Computational compatibility stays at PSI 0.34.x unless a separate upgrade is
-approved.
+The dependency upgrade targets PSI 0.38.4 or a compatible patch release.
+Check extension compatibility against the resolved released source; do not
+substitute a neighboring development checkout.
 
 ## Local development cycle
 

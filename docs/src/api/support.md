@@ -54,9 +54,17 @@ incomplete and is not selected by the public model constructor.
 
 ## Compatibility and validation environments
 
-The root project permits PSI 0.34.x, PNM 0.20.x, and PSY 5.x starting at 5.3.
+The dependency upgrade targets PSI 0.38.4, PNM 0.24.4, PSY 5.12.3, and
+InfrastructureSystems 3.6.3, with compatible updates allowed by `Project.toml`.
+These bounds describe the requested dependency baseline, not proof that every
+extension works with it. Validate runtime compatibility with the test suite.
 The docs environment additionally declares its solver/fixture prerequisites.
-No computational dependency upgrade is required by this manual.
+
+The upgrade's 281 enabled test assertions pass on Julia 1.13.2. The strict
+documentation build remains blocked: module-isolated use exposes a mismatch
+between upstream device-model keys and local template lookups/removals.
+The standalone tutorial passes when run in `Main`; that does not validate
+Documenter's isolated execution.
 
 The repository declares test prerequisites in `test/Project.toml`; `Pkg.test()`
 uses that environment together with the package under test. It includes hydro,

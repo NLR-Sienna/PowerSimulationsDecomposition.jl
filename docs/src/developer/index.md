@@ -3,7 +3,7 @@
 Read the [lifecycle](architecture.md) before changing extension dispatch, and
 the [workflow](workflow.md) before selecting checks. Computational behavior lives
 in Julia source and tests; this manual is not a substitute for verifying the
-resolved PowerSimulations 0.34.x interfaces.
+resolved PowerSimulations 0.38.x interfaces targeted by the dependency upgrade.
 
 ## Run the local development checks
 
