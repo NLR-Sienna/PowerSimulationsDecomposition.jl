@@ -22,14 +22,17 @@ makedocs(;
         "Tutorials" => ["Two-region dispatch" => "tutorials/intro_page.md"],
         "How-to guides" => [
             "Assign subsystems" => "how_to/subsystems.md",
+            "Configure security-constrained reserves" => "how_to/security_constrained_reserves.md",
             "Read results" => "how_to/results.md",
         ],
         "Explanations" => [
             "Split-area modeling" => "explanation/decomposition.md",
             "State passing" => "explanation/state_passing.md",
         ],
-        "Formulation library" =>
-            ["Network and state-estimation flows" => "formulation_library/network.md"],
+        "Formulation library" => [
+            "Network and state-estimation flows" => "formulation_library/network.md",
+            "Security-constrained integration" => "formulation_library/security_constrained.md",
+        ],
         "Reference" => [
             "Public API" => "api/public.md",
             "Support and limitations" => "api/support.md",

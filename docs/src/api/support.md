@@ -17,7 +17,7 @@ incomplete and is not selected by the public model constructor.
 | Horizontal state passing               | `test_horizontal_passing.jl`            | Hourly prior-execution injection comparison; selected branch comparisons with/without emulator |
 | Vertical state passing                 | `test_vertical_passing.jl`              | Same-window injection comparison and selected branch comparison                                |
 | Hydro budget / one-dimensional results | `test_hydro.jl`                         | HydroPowerSimulations budget formulation in the RTS fixture                                    |
-| Reserve deliverability                 | `test_reserve_deliverability.jl`        | **Disabled** by `DISABLED_TEST_FILES` in `runtests.jl`                                         |
+| Reserve deliverability                 | `test_reserve_deliverability.jl`, `test_component_assignment.jl` | Active generator-outage metadata, 10-bus reference/split monitoring, RTS selected-flow export and reserve conservation |
 | MPI                                    | `algorithms/mpi_parallel_algorithm.jl`  | **Incomplete**; unresolved variables and missing execution/aggregation implementation          |
 
 ## Algorithms and results
@@ -27,8 +27,10 @@ incomplete and is not selected by the public model constructor.
   - Regional solves run once each per execution; there is no convergence loop.
     They do not imply global-optimality or central/decomposed equivalence.
   - Dictionary iteration does not prescribe a stable coordination order.
-  - Sparse arrays are skipped during joint-axis/result processing; overlapping
-    axes can overwrite regional results. No regional axis is added to tables.
+  - Sparse result stores preserve actual regional tuple keys and evaluated
+    values, without inventing outage/monitor combinations. Mixed dense/sparse
+    representations for one key are rejected. Overlapping entries can still
+    overwrite regional results; no regional axis is added to tables.
   - Parameter aggregation supports at most two dimensions. Joint-axis methods
     assume compatible time axes; this is not arbitrary tensor concatenation.
   - Regional optimizer/objective statistics are not a certified aggregate central
@@ -73,3 +75,8 @@ failure is an environment blocker, not a failed physical-model assertion.
 
 See [workflow and validation](../developer/workflow.md) for selectors and
 transparent reporting of environment blockers.
+
+Security-constrained reserve examples use `ReserveUp` and explicit eligible
+monitoring sets. Empty monitoring is not all-component monitoring. See
+[configuration](../how_to/security_constrained_reserves.md) and
+[formulation-specific boundaries](../formulation_library/security_constrained.md).

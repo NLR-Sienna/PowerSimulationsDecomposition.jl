@@ -110,8 +110,19 @@ set_service_model!(
 ```
 
 This overload also adds the service to the base template. The service name is
-fixture-specific; inspect your own System. The active reserve tests verify
-regional construction with `RangeReserve`, not general reserve deliverability.
+fixture-specific; inspect your own System. `RangeReserve` construction tests
+do not by themselves establish reserve deliverability. Separate active tests
+cover `SecurityConstrainedRampReserve` with explicit outage monitoring in the
+10-bus and RTS fixtures.
+
+For security-constrained services, attach the outage to both its failed
+generator and responding service, and choose monitors from branches actually
+modeled in the consuming region. Include eligible boundary branches according
+to the study's ownership policy; do not copy all System branches to every region.
+Make these choices before constructing the `DecisionModel`, which finalizes
+regional outage metadata. Follow
+[Configure security-constrained reserves](security_constrained_reserves.md) for
+typed outage specifications, helper functions, and all-eligible/subset recipes.
 
 The multistage test fixture explicitly creates `AreaInterchange` components and
 assigns each to both subsystems so that their area-balance expressions can use

@@ -74,3 +74,9 @@ For inter-stage forecasts and state-estimation flows, read
 [formulation library](../formulation_library/network.md).
 Use [Read results](../how_to/results.md) to discover keys instead of assuming
 every formulation emits the same entries.
+
+To model generator outages and responding reserves, continue with
+[Configure security-constrained reserves](../how_to/security_constrained_reserves.md).
+Its separate executable example adds typed outage specifications, explicit
+regional monitoring, and contingency-result checks without changing this
+introductory dispatch model.

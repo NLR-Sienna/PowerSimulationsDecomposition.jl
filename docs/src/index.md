@@ -12,6 +12,7 @@ who already understand PowerSystems data and PowerSimulations templates.
 | Install compatible dependencies           | [Getting started](quick_start_guide.md)                 |
 | Build and solve a small example           | [Two-region dispatch tutorial](tutorials/intro_page.md) |
 | Control component membership              | [Assign subsystems](how_to/subsystems.md)               |
+| Configure outages and explicit monitoring | [Security-constrained reserves](how_to/security_constrained_reserves.md) |
 | Inspect outputs                           | [Read results](how_to/results.md)                       |
 | Understand the decomposition              | [Split-area modeling](explanation/decomposition.md)     |
 | Understand time and state transfers       | [State passing](explanation/state_passing.md)           |
@@ -22,8 +23,9 @@ who already understand PowerSystems data and PowerSimulations templates.
 The structure follows PowerSimulations' separation of tutorials, how-to guides,
 explanations, and reference material, but covers only this package's implemented
 extensions. The [support reference](api/support.md) identifies evidence and limits:
-in particular, MPI (Message Passing Interface) execution is incomplete and
-reserve-deliverability tests are disabled. MPI is a standard for communication
+in particular, MPI (Message Passing Interface) execution is incomplete, while
+reserve-deliverability coverage is limited to the documented tested cases.
+MPI is a standard for communication
 between processes in parallel programs, not a convergence algorithm.
 There is no automatic partitioning, convergence guarantee, or global-optimality
 equivalence claim.
