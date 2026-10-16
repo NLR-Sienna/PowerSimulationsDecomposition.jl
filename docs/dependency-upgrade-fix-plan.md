@@ -8,6 +8,11 @@ subsystem ownership, feedforward semantics, solver choice, or numerical toleranc
 Leave fixes proposed below unimplemented pending approval. Do not publish a PR
 until the runtime and documentation checks both pass.
 
+The dependency changes and initial diagnosis were committed and pushed in
+sequential slices on explicit user authorization, despite the documented docs
+blocker. Publishing this branch is not a claim that documentation validation
+passes, and it does not implement or authorize the proposed modeling-code fixes.
+
 The [root project](../Project.toml), [test project](../test/Project.toml), and
 [docs project](Project.toml) now require the latest non-yanked, non-prerelease
 Sienna releases available in the refreshed General registry:
@@ -67,18 +72,55 @@ absolute local path; no dependency bounds were changed by that cleanup.
 **Owner: PowerSimulationsDecomposition.jl, not PowerSystems, PowerSimulations,
 PowerSystemCaseBuilder, or Documenter.**
 
-The tutorial reaches `DecisionModel` construction at
-[the example](examples/decomposition.jl). That calls `finalize_template!` and
-then `_add_modeled_ac_branches!` in
-[multiproblem_template.jl](../src/multiproblem_template.jl).
-Removing the absent regional MonitoredLine model calls
-`pop!(branch_models, Symbol(component_type))`.
+### Where the documentation build fails
+
+The documentation is an integration test, not just rendered prose.
+[The tutorial page](src/tutorials/intro_page.md) executes
+[the example](examples/decomposition.jl) inside a named Documenter `@example`
+block. Documenter 0.27.25 evaluates that block inside a sandbox module using
+`Core.eval(mod, ex)`, rather than evaluating its imports in `Main`.
+
+The example creates a base template with Line and MonitoredLine models and a
+regional template for each subsystem. Under the existing from-bus ownership
+rule, subsystem `b` has no MonitoredLine components. Removing that unused
+regional model is expected behavior, not missing fixture data or a reason to
+change component ownership.
+
+The failing execution path is:
+
+```text
+docs/make.jl: strict makedocs
+  -> docs/src/tutorials/intro_page.md: @example decomposition
+  -> docs/examples/decomposition.jl: DecisionModel(...)
+  -> src/problems/multi_region_problem.jl: copy and finalize template
+  -> src/multiproblem_template.jl: finalize each regional template
+  -> _add_modeled_ac_branches!: remove unused MonitoredLine model
+  -> pop!(branch_models, Symbol(component_type))
+  -> KeyError: key Symbol("PowerSystems.MonitoredLine") not found
+```
+
+The error occurs during `DecisionModel` construction, before the example calls
+`build!` or `solve!`. It is not solver infeasibility, a PTDF numerical error,
+result aggregation, or an HTML rendering problem. Documenter's strict build
+correctly reports the failed example and terminates before rendering.
+
+### Why the dictionary keys disagree
 
 Released PowerSimulations 0.38.4 inserts device/branch keys using
-`Symbol(IS.strip_module_name(D))` in `src/core/device_model.jl` and retrieves
-them the same way in `src/operation/problem_template.jl`. Local code instead
-uses `Symbol(T)`, whose string representation depends on imports visible in
-`Main`. A module-isolated probe confirms:
+`Symbol(IS.strip_module_name(D))` in
+[device_model.jl](https://github.com/Sienna-Platform/PowerSimulations.jl/blob/v0.38.4/src/core/device_model.jl)
+and retrieves them the same way in
+[problem_template.jl](https://github.com/Sienna-Platform/PowerSimulations.jl/blob/v0.38.4/src/operation/problem_template.jl).
+For MonitoredLine, the stored key is always `:MonitoredLine`.
+
+Local pruning instead uses `Symbol(component_type)`. This constructs a symbol
+from the type's textual representation; it is not a stable type identifier.
+When MonitoredLine is not imported into `Main`, the representation includes its
+module prefix. Symbols do not normalize that prefix:
+`:MonitoredLine` and `Symbol("PowerSystems.MonitoredLine")` are distinct keys.
+The component type itself has not changed; only its textual qualification has.
+
+A fresh-process probe with imports confined to a module confirms:
 
 ```text
 stored keys: [:MonitoredLine]
@@ -88,11 +130,97 @@ Symbol key exists: false
 nameof key exists: true
 ```
 
-The same probe for ThermalStandard confirms that upstream base-template
-`get_model` returns a model, while both local multi-template lookup overloads
-return `nothing`. Existing tests import PowerSystems into `Main`, masking this
-context-sensitive mismatch. Running the example as a standalone script also
-imports into `Main`, explaining why it succeeds while Documenter fails.
+A control probe in a separate process, with `using PowerSystems` in `Main`,
+produces `:MonitoredLine` for both the stored key and `Symbol(MonitoredLine)`.
+Both probes use the same released packages; no fixture, solver, or dependency
+version changes are needed to switch between the two outcomes.
+
+### Why the full test suite and standalone example pass
+
+[The test harness](../test/runtests.jl) imports PowerSystems into `Main` before
+including the tests. Running the tutorial directly as a script does the same.
+Those imports make the local display-dependent key happen to match the
+upstream stored key. Documenter's sandbox imports do not establish the same
+bindings in `Main`, exposing the mismatch.
+
+Therefore, the 281 passing assertions and the failing docs build are consistent:
+they exercise different module/import contexts. Adding another nested module
+to the existing test process would not reliably expose the defect, because
+the harness has already populated `Main`. A fresh child process is required
+for the regression test.
+
+### The failure is broader than branch pruning
+
+The same mismatch appears in related local device/branch code:
+
+| Surface                        | Current local operation                                | Consequence in isolated use                                                                                            |
+|:------------------------------ |:------------------------------------------------------ |:---------------------------------------------------------------------------------------------------------------------- |
+| Regional branch pruning        | `pop!(branch_models, Symbol(component_type))`          | Confirmed KeyError for the unused MonitoredLine model.                                                                 |
+| Base/regional model retrieval  | `get(models, Symbol(T), nothing)`                      | Confirmed false absence: upstream retrieves ThermalStandard, but both local multi-template overloads return `nothing`. |
+| Empty device-model pruning     | `pop!(device_models, Symbol(component_type))`          | Same key mismatch; add a dedicated empty-device regression before fixing.                                              |
+| Injector/bus consistency guard | `Symbol(typeof(si))` membership in modeled-device keys | Can fail to recognize a modeled injector, bypassing the bus-consistency check; add a negative regression.              |
+
+The first two outcomes were reproduced. The last two are coupled risks inferred
+from the same key construction, not additional failures observed in the full
+suite. They belong in the fix scope because fixing only MonitoredLine removal
+would leave module-context-dependent behavior elsewhere.
+
+The evidence identifies a local extension/API mismatch with PSI 0.38.4. It does
+not establish the first release or commit that introduced the mismatch, nor
+that every older dependency combination is affected.
+
+## Recommended implementation design
+
+Make template access independent of imports into `Main`, while retaining the
+existing device, branch, and service contracts.
+
+### Delegate model retrieval to PowerSimulations
+
+The two local `PSI.get_model` overloads in
+[multiproblem_template.jl](../src/multiproblem_template.jl) should select the
+appropriate upstream `PSI.ProblemTemplate` and delegate retrieval to PSI:
+
+```text
+base lookup     -> PSI.get_model(template.base_template, T)
+regional lookup -> PSI.get_model(template.sub_templates[subsystem], T)
+```
+
+These are proposed replacements, not implemented changes. The delegated receiver
+is a `PSI.ProblemTemplate`, so dispatch selects upstream's method rather than
+recursing into the `MultiProblemTemplate` overload. Preserve `nothing` for an
+absent device model and the existing error for an unknown subsystem.
+
+### Remove models using their actual stored keys
+
+For empty-device and branch pruning, iterate over a snapshot of the dictionary
+entries, retaining each `(key, model)` pair. Check component availability using
+the same existing subsystem filter and remove absent models by that stored
+`key`. Snapshotting entries also avoids mutating a dictionary during traversal
+of its live values iterator.
+
+This approach does not need to reconstruct a key at all. If reconstruction is
+required elsewhere, use the same `Symbol(IS.strip_module_name(T))` conversion as
+the resolved upstream implementation. Although `nameof(MonitoredLine)` happens
+to produce the right key here, it is not a general substitute for PSI's
+normalization contract, particularly for parameterized types.
+
+Preserve the current warning, branch ownership, modeled-branch type registration,
+and removal of only regionally absent components. Do not suppress the KeyError
+with a default-valued `pop!`: that could leave the unused model in the template
+while hiding the mismatch.
+
+### Recognize modeled injectors through the same contract
+
+In [sequential_algorithm.jl](../src/algorithms/sequential_algorithm.jl), use
+upstream model retrieval or upstream-normalized device keys to decide whether
+an injector is modeled. Then retain the current explicit bus-membership check
+and `ConflictingInputsError`. This is a validation correction, not a new
+subsystem policy.
+
+Keep service lookup separate. Released PSI's service keys still use
+`(service_name, Symbol(D))`; a repository-wide replacement of `Symbol(Type)`
+would mix two different upstream contracts and could break reserve/feedforward
+attachment.
 
 ## Ordered fix plan
 
@@ -120,18 +248,50 @@ imports into `Main`, explaining why it succeeds while Documenter fails.
     not mechanically replace every `Symbol(Type)`: released PSI's service
     dictionary still uses `(service_name, Symbol(D))`, unlike device dictionaries.
     Run reserve/feedforward regressions if service matching changes.
- 5. **Validate and publish only after green checks.** Run the focused
+ 5. **Validate fixes before opening a PR.** Run the focused
     component-assignment/HVDC regressions, the module-isolated reproducer, the
     full suite, the standalone tutorial, and the strict docs build. Use the
     existing formatter for any changed Julia code. Update the temporary
     validation warnings in the README and support manual after the blocker
-    is fixed. Then commit, push, and open the authorized PR against `main`
-    using the repository template.
+    is fixed. Commit and push the fixes separately from the already-published
+    dependency and documentation changes, then open the authorized PR against
+    `main` using the repository template.
 
 No upstream fix is required by the evidence collected. Do not work around the
 failure by disabling strict docs, skipping the example, removing MonitoredLine
 from the tutorial, importing packages into `Main` solely to affect display, or
 downgrading the requested releases.
+
+## Regression execution and verification
+
+Add a proposed fresh-process fixture under `test/test_utils/` and invoke it
+from the component-assignment tests using `Base.julia_cmd()`. Select the active
+Pkg test sandbox with `--project` and disable startup files. Do not launch the
+fixture in an unprepared `--project=test` environment or import PowerSystems
+into the child's `Main`; its imports must remain inside its test module.
+
+The child should verify successful base/regional lookup, unused branch and
+empty-device pruning, and rejection of an inconsistent injector/bus assignment.
+Check its exit status in the parent test. Keep a control scenario with imports
+in `Main` to ensure the fix preserves existing supported usage.
+
+After implementing the fix, run from the repository root:
+
+```powershell
+julia --startup-file=no --project=. -e 'using Pkg; Pkg.test(; test_args=["test_component_assignment", "test_hvdc"])'
+julia --startup-file=no --project=docs -e 'module TutorialSandbox; include(joinpath(pwd(),"docs","examples","decomposition.jl")); end'
+julia --startup-file=no --project=. -e 'using Pkg; Pkg.test()'
+julia --startup-file=no --project=docs docs\examples\decomposition.jl
+$env:DOCS_DEPLOY='false'
+julia --startup-file=no --project=docs docs\make.jl
+git --no-pager diff --check
+```
+
+These are future acceptance commands, not a claim of passing results for an
+unimplemented fix. The original measured outcomes are recorded above. During
+the explanation update, fresh-process key probes again confirmed both the
+isolated mismatch and the matching-key control with imports into `Main`;
+no modeling code or dependency bounds changed, so the full suite was not rerun.
 
 ## Acceptance criteria for the fix
 
