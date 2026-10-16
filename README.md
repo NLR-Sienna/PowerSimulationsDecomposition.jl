@@ -2,7 +2,7 @@
 
 [![Main - CI](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/main-tests.yml/badge.svg?branch=main)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/main-tests.yml)
 [![codecov](https://codecov.io/gh/NLR-Sienna/PowerSimulationsDecomposition.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/NLR-Sienna/PowerSimulationsDecomposition.jl)
-[![Documentation](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/docs.yml/badge.svg)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/docs.yml)
+[![Documentation](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/actions/workflows/docs.yml/badge.svg)](https://nlr-sienna.github.io/PowerSimulationsDecomposition.jl/dev/)
 [![Community](https://img.shields.io/badge/community-Sienna-sienna.svg?logo=github)](https://github.com/NLR-Sienna/PowerSimulationsDecomposition.jl/issues)
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FPowerSimulationsDecomposition&query=total_requests&label=Downloads)](https://juliapkgstats.com/api/v1/total_downloads/PowerSimulationsDecomposition)
 
@@ -73,15 +73,16 @@ julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.in
 julia --project=docs docs\examples\decomposition.jl
 ```
 
-- [User manual](docs/src/index.md): tutorials, how-to guides, and explanations.
+- [User manual](https://nlr-sienna.github.io/PowerSimulationsDecomposition.jl/dev/):
+  tutorials, how-to guides, and explanations.
 - [Formulation library](docs/src/formulation_library/network.md): the mathematical
   contracts owned by this package.
 - [Public API](docs/src/api/public.md) and [internal extensions](docs/src/api/internal.md).
 - [Developer guide](docs/src/developer/index.md): architecture, tests, and local docs builds.
 
-The documentation badge links to the build workflow, not a published manual.
-No stable/dev GitHub Pages site was available when these links were checked.
-Use the repository pages above or [build the manual locally](docs/src/developer/workflow.md).
+Documentation is published on
+[GitHub Pages](https://nlr-sienna.github.io/PowerSimulationsDecomposition.jl/dev/).
+To build it locally, see the [developer workflow](docs/src/developer/workflow.md).
 
 ## Development
 
@@ -93,6 +94,7 @@ for questions and bug reports. The default branch is `main`.
 
 PowerSimulationsDecomposition.jl is released under the [BSD 3-Clause license](LICENSE).
 Development includes work on Interregional Transmission Operational Coordination
-(IRTOC), under GDO 20. The laboratory's current name is
+(IRTOC), under GDO 20.
+
 [National Laboratory of the Rockies (NLR)](https://www.nlr.gov/).
 Historical copyright and legal attribution are retained in the license.
