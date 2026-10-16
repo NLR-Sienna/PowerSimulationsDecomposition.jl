@@ -60,11 +60,11 @@ These bounds describe the requested dependency baseline, not proof that every
 extension works with it. Validate runtime compatibility with the test suite.
 The docs environment additionally declares its solver/fixture prerequisites.
 
-The upgrade's 281 enabled test assertions pass on Julia 1.13.2. The strict
-documentation build remains blocked: module-isolated use exposes a mismatch
-between upstream device-model keys and local template lookups/removals.
-The standalone tutorial passes when run in `Main`; that does not validate
-Documenter's isolated execution.
+Device and branch lookup delegates to the upstream template interface, and
+regional pruning removes models by their stored dictionary keys. Importing
+PowerSystems components into `Main` is not required. Component-assignment
+regressions run in a fresh process with imports confined to a module, matching
+the isolation used by Documenter's executable tutorial.
 
 The repository declares test prerequisites in `test/Project.toml`; `Pkg.test()`
 uses that environment together with the package under test. It includes hydro,
