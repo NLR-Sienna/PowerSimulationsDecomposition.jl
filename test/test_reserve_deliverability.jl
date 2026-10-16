@@ -327,12 +327,42 @@ end
     }(
         "Reserve1_2",
     )]
+    outage_ids = Dict(
+        reserve_name => string(
+            IS.get_uuid(
+                only(
+                    get_supplemental_attributes(
+                        GeometricDistributionForcedOutage,
+                        get_component(VariableReserve{ReserveUp}, sys, reserve_name),
+                    ),
+                ),
+            ),
+        ) for reserve_name in ["Reserve1_1", "Reserve1_2"]
+    )
+    @test Set(unique(post_contingency_flows_1.name)) == Set(
+        outage_ids["Reserve1_1"] * "__" * name for
+        name in monitored_branches_by_area["Area1"]
+    )
+    @test Set(unique(post_contingency_flows_2.name)) == Set(
+        outage_ids["Reserve1_2"] * "__" * name for
+        name in monitored_branches_by_area["Area2"]
+    )
     for line_name in get_name.(get_components(Line, sys))
         flow = filter(row -> row.name == line_name, flows)[:, :value]
-        post_contingency_flow_1 =
-            filter(row -> row.name2 == line_name, post_contingency_flows_1)[:, :value]
-        post_contingency_flow_2 =
-            filter(row -> row.name2 == line_name, post_contingency_flows_2)[:, :value]
+        post_contingency_flow_1 = filter(
+            row -> row.name == outage_ids["Reserve1_1"] * "__" * line_name,
+            post_contingency_flows_1,
+        )[
+            :,
+            :value,
+        ]
+        post_contingency_flow_2 = filter(
+            row -> row.name == outage_ids["Reserve1_2"] * "__" * line_name,
+            post_contingency_flows_2,
+        )[
+            :,
+            :value,
+        ]
         # Post contingency flow in the area of the outage is different
         if occursin("_1", line_name)
             @test !all(isapprox.(flow, post_contingency_flow_1; atol=1e-6))
@@ -361,11 +391,55 @@ end
     )
     results_uc0 = get_decision_problem_results(results, "UC0")
     results_uc_subsystem = get_decision_problem_results(results, "UC_Subsystem")
+    outage_id = string(
+        IS.get_uuid(
+            only(
+                get_supplemental_attributes(
+                    GeometricDistributionForcedOutage,
+                    get_component(VariableReserve{ReserveUp}, sys, "Spin_Up_R3"),
+                ),
+            ),
+        ),
+    )
+    post_contingency_flows = read_realized_expression(
+        results_uc_subsystem,
+        "PostContingencyBranchFlow__VariableReserve__ReserveUp__Spin_Up_R3";
+        table_format=TableFormat.WIDE,
+    )
+    @test Set(names(post_contingency_flows)) ==
+          Set(["DateTime", outage_id * "__CA-1", outage_id * "__A28"])
+    @test size(post_contingency_flows, 1) == 5
+    @test all(isfinite, post_contingency_flows[!, outage_id * "__CA-1"])
+    @test all(isfinite, post_contingency_flows[!, outage_id * "__A28"])
+    subsystem_model = PSI.get_simulation_model(sim, :UC_Subsystem)
+    regional_container = PSI.get_optimization_container(subsystem_model).subproblems["a"]
+    regional_flows = regional_container.expressions[PSI.ExpressionKey{
+        PostContingencyBranchFlow,
+        VariableReserve{ReserveUp},
+    }(
+        "Spin_Up_R3",
+    )]
+    @test Set(keys(regional_flows.data)) == Set(
+        (outage_id, branch_name, time_index) for branch_name in ["CA-1", "A28"] for
+        time_index in 1:5
+    )
+    for branch_name in ["CA-1", "A28"]
+        expected_flows = [
+            PSI.jump_value(regional_flows[outage_id, branch_name, time_index]) *
+            get_base_power(sys) for time_index in 1:5
+        ]
+        @test isapprox(
+            post_contingency_flows[!, outage_id * "__" * branch_name],
+            expected_flows;
+            atol=1e-6,
+        )
+    end
     active_power = read_realized_variable(
         results_uc_subsystem,
         "ActivePowerVariable__ThermalStandard";
         table_format=TableFormat.WIDE,
     )
+    @test post_contingency_flows.DateTime == active_power.DateTime
     # Test sum of the responding reserve deployments is equivalent to the total outaged generation: 
     for outages_specification in outages_specifications
         outage_generators = outages_specification.outage_generators

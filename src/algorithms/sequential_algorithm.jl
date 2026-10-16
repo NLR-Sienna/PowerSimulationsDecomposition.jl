@@ -111,9 +111,10 @@ end
 Evaluate and copy regional results into the joined stores of `container`.
 
 Copy assigned entries from dense one-, two-, and three-dimensional variable,
-auxiliary-variable, constraint, expression, and dual arrays. Use regional bus
-maps for nodal active-power-balance columns. Also copy parameter values and
-multipliers, which support only one or two dimensions.
+auxiliary-variable, constraint, expression, and dual arrays, and copy existing
+tuple-keyed entries from sparse arrays without adding Cartesian combinations.
+Use regional bus maps for nodal active-power-balance columns. Also copy parameter
+values and multipliers, which support only one or two dimensions.
 
 The destination keys and arrays must already exist. Preserve the stored units,
 flow signs, and time indexing; do not resample or convert power bases. Return
@@ -121,11 +122,12 @@ flow signs, and time indexing; do not resample or convert power bases. Return
 
 ## Notes
 
-  - Skip `SparseAxisArray` results and do not copy other dense dimensionalities.
-  - Raise an error for parameter arrays with more than two dimensions.
-  - Overlapping regional axes can overwrite previously copied entries; dictionary
-    iteration does not define a coordination order.
-  - Copy into joined result stores, not into a solved central optimization model.
+Preserve sparse tuple keys and do not copy other dense dimensionalities. Raise an
+error for parameter arrays with more than two dimensions.
+
+Overlapping regional axes can overwrite previously copied entries; dictionary
+iteration does not define a coordination order. Copy into joined result stores,
+not into a solved central optimization model.
 """
 function write_results_to_main_container(container::MultiOptimizationContainer)
     # TODO: This process needs to work in parallel almost right away
@@ -136,12 +138,14 @@ function write_results_to_main_container(container::MultiOptimizationContainer)
             main_container_data_field = getproperty(container, field)
             for (key, src) in subproblem_data_field
                 @debug "writing $key to main container"
+                dst = main_container_data_field[key]
                 if src isa JuMP.Containers.SparseAxisArray
-                    @debug "Skip SparseAxisArray" field key
+                    for (index, value) in src.data
+                        dst.data[index] = PSI.jump_value(value)
+                    end
                     continue
                 end
                 num_dims = ndims(src)
-                dst = main_container_data_field[key]
                 if num_dims == 1
                     columns = _get_main_container_columns(container, k, key, src)
                     for col in columns
