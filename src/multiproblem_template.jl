@@ -68,14 +68,7 @@ function PSI.get_component_types(template::MultiProblemTemplate)::Vector{DataTyp
 end
 
 function PSI.get_model(template::MultiProblemTemplate, ::Type{T}) where {T <: PSY.Device}
-    base_template = template.base_template
-    if T <: PSY.Branch
-        return get(base_template.branches, Symbol(T), nothing)
-    elseif T <: PSY.Device
-        return get(base_template.devices, Symbol(T), nothing)
-    else
-        error("Component $T not present in the template")
-    end
+    return PSI.get_model(template.base_template, T)
 end
 
 function PSI.get_model(
@@ -83,14 +76,7 @@ function PSI.get_model(
     ::Type{T},
     subsystem::String,
 ) where {T <: PSY.Device}
-    base_template = template.sub_templates[subsystem]
-    if T <: PSY.Branch
-        return get(base_template.branches, Symbol(T), nothing)
-    elseif T <: PSY.Device
-        return get(base_template.devices, Symbol(T), nothing)
-    else
-        error("Component $T not present in the template")
-    end
+    return PSI.get_model(template.sub_templates[subsystem], T)
 end
 
 """
@@ -268,12 +254,13 @@ function _check_for_empty_device_models!(
     sys::PSY.System,
     subsystem::String,
 )
-    for device_model in values(PSI.get_device_models(template))
+    device_models = PSI.get_device_models(template)
+    for (key, device_model) in collect(device_models)
         component_type = PSI.get_component_type(device_model)
         components =
             PSY.get_available_components(component_type, sys; subsystem_name=subsystem)
         if isempty(components)
-            pop!(PSI.get_device_models(template), Symbol(component_type))
+            pop!(device_models, key)
             @warn "Device model for $component_type is included in the main template but there are no available components of this type in subsystem $subsystem and will be removed from the template"
         end
     end
@@ -287,12 +274,12 @@ function _add_modeled_ac_branches!(
 )
     network_model = PSI.get_network_model(template)
     branch_models = PSI.get_branch_models(template)
-    for v in values(branch_models)
+    for (key, v) in collect(branch_models)
         component_type = PSI.get_component_type(v)
         if isempty(
             PSY.get_available_components(component_type, sys; subsystem_name=subsystem),
         )
-            pop!(branch_models, Symbol(component_type))
+            pop!(branch_models, key)
             @warn "$component_type is modeled but not in subsystem $subsystem so removed from the template"
         else
             if (component_type <: PSY.ACTransmission)

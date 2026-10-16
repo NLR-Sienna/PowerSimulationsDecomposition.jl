@@ -62,3 +62,11 @@
         PSI.ConstraintKey{FlowRateConstraint, MonitoredLine}("lb"),
     )
 end
+
+@testset "Test component assignment without imports in Main" begin
+    # The harness imports PowerSystems into Main, so module isolation needs a fresh process.
+    test_environment = dirname(Base.active_project())
+    test_file = joinpath(@__DIR__, "test_utils", "module_isolated_templates.jl")
+    command = `$(Base.julia_cmd()) --startup-file=no --project=$test_environment $test_file`
+    @test success(pipeline(command; stdout=stdout, stderr=stderr))
+end

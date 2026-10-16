@@ -20,7 +20,6 @@ function build_main_problem!(
     template::MultiProblemTemplate,
     sys::PSY.System,
 )
-    device_models_dict = keys(PSI.get_device_models(template))
     for k in keys(container.subproblems)
         subsystem_buses = PSY.get_available_components(PSY.ACBus, sys; subsystem_name=k)
         subsystem_bus_nos = [PSY.get_number(b) for b in subsystem_buses]
@@ -29,7 +28,7 @@ function build_main_problem!(
             PSY.get_available_components(PSY.StaticInjection, sys; subsystem_name=k)
         subsystem_buses = PSY.get_available_components(PSY.ACBus, sys; subsystem_name=k)
         for si in subsystem_static_injectors
-            if Symbol(typeof(si)) ∈ device_models_dict
+            if PSI.get_model(template, typeof(si)) !== nothing
                 if !(PSY.get_bus(si) ∈ subsystem_buses)
                     throw(
                         IS.ConflictingInputsError(
