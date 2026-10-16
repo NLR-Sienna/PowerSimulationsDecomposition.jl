@@ -29,8 +29,9 @@ convergence algorithm**. The MPI (Message Passing Interface) execution path is
 incomplete. MPI is a standard for communication between processes in parallel
 programs; its presence here does not imply supported parallel execution.
 Modeled HVDC terminal
-buses must belong to the same subsystem. Overlapping result axes and sparse arrays
-have aggregation limitations; reserve-deliverability tests are disabled.
+buses must belong to the same subsystem. Overlapping result axes can overwrite
+regional entries. Sparse contingency results preserve actual tuple keys;
+reserve-deliverability regressions cover explicit monitoring in 10-bus and RTS cases.
 See [supported behavior and limitations](docs/src/api/support.md).
 
 ## Installation
@@ -75,6 +76,8 @@ julia --project=docs docs\examples\decomposition.jl
 
 - [User manual](https://nlr-sienna.github.io/PowerSimulationsDecomposition.jl/dev/):
   tutorials, how-to guides, and explanations.
+- [Security-constrained reserves](docs/src/how_to/security_constrained_reserves.md):
+  outage specifications, explicit monitoring, and a runnable regional example.
 - [Formulation library](docs/src/formulation_library/network.md): the mathematical
   contracts owned by this package.
 - [Public API](docs/src/api/public.md) and [internal extensions](docs/src/api/internal.md).
