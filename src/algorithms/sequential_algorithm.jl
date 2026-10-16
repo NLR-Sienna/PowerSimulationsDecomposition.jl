@@ -1,3 +1,18 @@
+"""
+    build_impl!(container::MultiOptimizationContainer{SequentialAlgorithm},
+                template::MultiProblemTemplate, sys::PSY.System)
+
+Build each regional optimization problem and validate the resulting containers.
+
+Use each regional template to populate its corresponding optimization container,
+then populate bus maps and validate component membership with
+[`build_main_problem!`](@ref). Check both regional and main optimization
+containers through PowerSimulations and return `nothing`.
+
+Regional traversal follows dictionary iteration, not sorted subsystem order.
+Propagate construction and validation errors; do not solve the problems or
+allocate the joined result arrays here.
+"""
 function build_impl!(
     container::MultiOptimizationContainer{SequentialAlgorithm},
     template::MultiProblemTemplate,
@@ -15,12 +30,27 @@ function build_impl!(
     return
 end
 
+"""
+    build_main_problem!(container::MultiOptimizationContainer{SequentialAlgorithm},
+                        template::MultiProblemTemplate, sys::PSY.System)
+
+Populate regional bus-number maps and validate modeled component membership.
+
+Store the available AC bus numbers for each region in
+`container.subproblem_bus_map`. Require each available modeled static injector
+to share its subsystem with its attached bus. When an HVDC model is configured,
+require both terminal buses of each available regional HVDC component to belong
+to that region.
+
+Throw `IS.ConflictingInputsError` for inconsistent membership and return
+`nothing` otherwise. Despite its name, this method does not construct a central
+optimization problem or assign components to subsystems.
+"""
 function build_main_problem!(
     container::MultiOptimizationContainer{SequentialAlgorithm},
     template::MultiProblemTemplate,
     sys::PSY.System,
 )
-    device_models_dict = keys(PSI.get_device_models(template))
     for k in keys(container.subproblems)
         subsystem_buses = PSY.get_available_components(PSY.ACBus, sys; subsystem_name=k)
         subsystem_bus_nos = [PSY.get_number(b) for b in subsystem_buses]
@@ -29,7 +59,7 @@ function build_main_problem!(
             PSY.get_available_components(PSY.StaticInjection, sys; subsystem_name=k)
         subsystem_buses = PSY.get_available_components(PSY.ACBus, sys; subsystem_name=k)
         for si in subsystem_static_injectors
-            if Symbol(typeof(si)) ∈ device_models_dict
+            if PSI.get_model(template, typeof(si)) !== nothing
                 if !(PSY.get_bus(si) ∈ subsystem_buses)
                     throw(
                         IS.ConflictingInputsError(
@@ -75,6 +105,28 @@ end
 # once to write into the main container and a second time when writing into the
 # store. The upside of this approach is that doesn't require overloading write_model_XXX_results!
 # methods from PowerSimulations.
+"""
+    write_results_to_main_container(container::MultiOptimizationContainer)
+
+Evaluate and copy regional results into the joined stores of `container`.
+
+Copy assigned entries from dense one-, two-, and three-dimensional variable,
+auxiliary-variable, constraint, expression, and dual arrays. Use regional bus
+maps for nodal active-power-balance columns. Also copy parameter values and
+multipliers, which support only one or two dimensions.
+
+The destination keys and arrays must already exist. Preserve the stored units,
+flow signs, and time indexing; do not resample or convert power bases. Return
+`nothing`.
+
+## Notes
+
+  - Skip `SparseAxisArray` results and do not copy other dense dimensionalities.
+  - Raise an error for parameter arrays with more than two dimensions.
+  - Overlapping regional axes can overwrite previously copied entries; dictionary
+    iteration does not define a coordination order.
+  - Copy into joined result stores, not into a solved central optimization model.
+"""
 function write_results_to_main_container(container::MultiOptimizationContainer)
     # TODO: This process needs to work in parallel almost right away
     # TODO: This doesn't handle the case where subproblems have an overlap in axis names.
@@ -165,6 +217,21 @@ function _write_parameter_results_to_main_container(
     end
 end
 
+"""
+    solve_impl!(container::MultiOptimizationContainer{SequentialAlgorithm},
+                sys::PSY.System)
+
+Solve regional optimization problems sequentially and join successful results.
+
+Call PowerSimulations' solve implementation for each regional container in
+dictionary iteration order. Return immediately with the first status other
+than `ISSIM.RunStatus.SUCCESSFULLY_FINALIZED`, without joining results.
+
+After every regional solve succeeds, call
+[`write_results_to_main_container`](@ref) and return the last regional status.
+Return `ISSIM.RunStatus.RUNNING` when there are no regional problems. Do not
+solve a central coordination model or perform an iterative convergence loop.
+"""
 function solve_impl!(
     container::MultiOptimizationContainer{SequentialAlgorithm},
     sys::PSY.System,

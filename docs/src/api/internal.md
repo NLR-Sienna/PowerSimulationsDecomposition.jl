@@ -13,6 +13,45 @@ PowerSimulationsDecomposition.StateEstimationInjections
 PowerSimulationsDecomposition.StateEstimationFlows
 ```
 
+```@meta
+CurrentModule = PowerSimulationsDecomposition
+```
+
+## Sequential construction, solution, and results
+
+```@docs
+build_impl!
+build_main_problem!
+write_results_to_main_container
+solve_impl!
+```
+
+## Regional template access and finalization
+
+The constructors are documented with [`MultiProblemTemplate`](@ref) in the
+public reference. The following methods expose or mutate the underlying
+upstream templates; stored references and subsystem filters are not copies
+unless explicitly stated.
+
+```@docs
+get_sub_templates
+get_sub_problem_keys
+PSI.get_network_formulation(::MultiProblemTemplate)
+PSI.get_component_types(::MultiProblemTemplate)
+PSI.get_model(::MultiProblemTemplate, ::Type{<:PSY.Device})
+PSI.get_model(::MultiProblemTemplate, ::Type{<:PSY.Device}, ::String)
+PSI.set_network_model!(::MultiProblemTemplate, ::PSI.NetworkModel{<:PM.AbstractPowerModel})
+PSI.set_device_model!(::MultiProblemTemplate, ::Type{<:PSY.Device}, ::Type{<:PSI.AbstractDeviceFormulation})
+PSI.set_device_model!(::MultiProblemTemplate, ::PSI.DeviceModel{<:PSY.Device, <:PSI.AbstractDeviceFormulation})
+PSI.set_device_model!(::MultiProblemTemplate, ::PSI.DeviceModel{<:PSY.Branch, <:PSI.AbstractDeviceFormulation})
+PSI.set_service_model!(::MultiProblemTemplate, ::String, ::Type{<:PSY.Service}, ::Type{<:PSI.AbstractServiceFormulation})
+PSI.set_service_model!(::MultiProblemTemplate, ::Type{<:PSY.Service}, ::Type{<:PSI.AbstractServiceFormulation})
+PSI.set_service_model!(::MultiProblemTemplate, ::String, ::PSI.ServiceModel{<:PSY.Service, <:PSI.AbstractServiceFormulation})
+PSI.set_service_model!(::MultiProblemTemplate, ::PSI.ServiceModel{<:PSY.Service, <:PSI.AbstractServiceFormulation})
+PSI.set_service_model!(::MultiProblemTemplate, ::PSI.ServiceModel{<:PSY.Service, <:PSI.AbstractServiceFormulation}, ::String)
+finalize_template!
+```
+
 ## Extension map
 
 | Source                               | Internal binding or PSI extension                                           | Responsibility                                             |

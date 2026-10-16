@@ -35,10 +35,12 @@ See [supported behavior and limitations](docs/src/api/support.md).
 
 ## Installation
 
-Use Julia **1.10 or newer** for the compatible PowerSimulations 0.34.x environment.
-The root project declares a broader Julia lower bound, but resolved dependencies
-can require a newer runtime. Do not substitute current PowerSimulations `main`
-for the compatible dependency.
+Use Julia **1.10 or newer**. The dependency upgrade targets PowerSimulations
+0.38.4, PowerSystems 5.12.3, PowerNetworkMatrices 0.24.4, and InfrastructureSystems
+3.6.3 or compatible releases allowed by `Project.toml`. Do not substitute
+unreleased dependency checkouts. Declared version bounds do not by themselves
+establish runtime compatibility; run the test suite when upgrading.
+
 
 For a source checkout:
 

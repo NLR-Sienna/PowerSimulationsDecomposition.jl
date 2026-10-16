@@ -7,8 +7,9 @@ Community contributions are welcome.
    Include Julia/package versions, subsystem assignments, formulation names,
    chronology, and relevant logs, without confidential system data.
 2. Fork the repository and create a branch from `main`. Preserve computational
-   compatibility, particularly PowerSimulations 0.34.x; do not upgrade dependencies
-   simply to match newer documentation.
+   compatibility with the released dependency targets in `Project.toml`,
+   particularly PowerSimulations 0.38.4 or a compatible patch release. Do not
+   substitute unreleased dependency checkouts simply to match newer documentation.
 3. Follow the [local style guide](docs/src/developer/style.md) and
    [development workflow](docs/src/developer/workflow.md). Add behavior-focused
    regression tests and update the affected documentation.

@@ -4,8 +4,7 @@
 
   - Use Julia **1.10+**; the documentation workflow tracks the latest stable
     Julia 1.x release using `setup-julia`'s `version: '1'` selector.
-    Although the root project permits Julia 1.6, compatible resolved dependencies
-    impose newer requirements. In particular, PSI 0.34.2 requires Julia 1.10.
+    The root project and the released Sienna dependency targets require Julia 1.10.
   - Know PowerSystems components, named subsystems, deterministic forecasts, and
     PowerSimulations device/network templates.
   - Select a solver that supports your formulations. The tutorial uses HiGHS;
@@ -13,11 +12,13 @@
   - Allow network access for Julia packages, solver artifacts, and the tutorial's
     PowerSystemCaseBuilder fixture on first use.
 
-The computational compatibility contract is in the root `Project.toml`:
-PowerSimulations **0.34.x**, PowerSystems 5.x from 5.3, and
-PowerNetworkMatrices 0.20.x. Do not develop the neighboring PSI `main` checkout
-into this environment: its APIs and compatibility bounds can be newer.
-Always inspect the resolved versions, not only declared lower bounds.
+The dependency upgrade targets in the root `Project.toml` are PowerSimulations
+**0.38.4**, PowerSystems **5.12.3**, PowerNetworkMatrices **0.24.4**, and
+InfrastructureSystems **3.6.3**, with compatible releases allowed by Julia's
+compatibility rules. Do not develop the neighboring PSI `main` checkout into
+this environment: its APIs and compatibility bounds can be newer. Always inspect
+the resolved versions and run the tests; version bounds alone do not establish
+runtime compatibility.
 
 ## Set up a checkout
 
