@@ -140,7 +140,12 @@ HydroPowerSimulations. Consult the resolved dependency source and its
 version-matched documentation; newer PSI documentation can describe unsupported
 APIs.
 
-  - [PowerSimulations 0.34.2 source](https://github.com/Sienna-Platform/PowerSimulations.jl/tree/v0.34.2/src)
+For `SecurityConstrainedRampReserve`, explicit outage/monitor selection, and
+regional metadata/result integration, see
+[Security-constrained integration](security_constrained.md). These remain
+upstream formulations, not additional decomposition-owned mathematical models.
+
+  - [PowerSimulations 0.38.4 source](https://github.com/NLR-Sienna/PowerSimulations.jl/tree/v0.38.4/src)
   - [HydroPowerSimulations repository](https://github.com/Sienna-Platform/HydroPowerSimulations.jl)
   - [Supported behavior and test evidence](../api/support.md)
 

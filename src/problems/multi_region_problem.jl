@@ -156,7 +156,28 @@ function _map_containers(model::PSI.DecisionModel{MultiRegionProblem})
         end
     end
 
+    _map_sparse_containers!(container)
     _make_parameter_container!(model)
+    return
+end
+
+function _map_sparse_containers!(container::MultiOptimizationContainer)
+    for subproblem in values(container.subproblems)
+        for field in CONTAINER_FIELDS
+            field_data = getproperty(container, field)
+            for (key, source) in getproperty(subproblem, field)
+                source isa JuMP.Containers.SparseAxisArray || continue
+                destination = get!(field_data, key) do
+                    JuMP.Containers.SparseAxisArray(Dict{keytype(source.data), Float64}())
+                end
+                destination isa JuMP.Containers.SparseAxisArray ||
+                    throw(ArgumentError("Incompatible dense and sparse results for $key"))
+                for index in keys(source.data)
+                    destination.data[index] = NaN
+                end
+            end
+        end
+    end
     return
 end
 

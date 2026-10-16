@@ -62,7 +62,8 @@ and the separate [state-passing sequences](../explanation/state_passing.md).
     `MultiOptimizationContainer(SequentialAlgorithm, ...)`.
  3. Construction deep-copies/finalizes the template. Regional device/branch
     models without available components are removed; service contributors and
-    device-service relationships are populated.
+   device-service relationships and upstream device/service outage metadata
+   are populated. Configure outage attachments and monitoring before construction.
  4. Time-series validation requires forecast data. The container constructor
     independently rejects multiple resolutions and abstract time-series types.
 
@@ -86,10 +87,13 @@ single combined regional JuMP problem.
     regional build, constructs bus maps, checks static-injector and modeled-HVDC
     membership, and checks containers.
  5. `_map_containers`: union dense result axes, allocate joint numeric arrays,
-    and merge parameter arrays/multipliers/attributes.
+    preserve sparse tuple-key unions through `_map_sparse_containers!`, and merge
+    parameter arrays/multipliers/attributes.
  6. Mark the multi-container for recurrent solves and log settings.
 
-Joint-axis processing skips sparse arrays. Parameter attributes must agree;
+Sparse stores use actual regional keys rather than Cartesian products of axes.
+Mixed dense/sparse representations for the same result key raise an error.
+Parameter attributes must agree;
 time-series attribute maps reject collisions. Compatible axes and nonoverlapping
 result ownership are assumptions, not an arbitrary concatenation facility.
 
@@ -106,6 +110,8 @@ and optimizer statistics. The package does not explicitly aggregate regional
 objective values or create a convergence certificate.
 
 Dense field copying treats one-, two-, and three-dimensional arrays separately.
+Sparse field copying evaluates each existing tuple-keyed entry with PSI's value
+accessor. This supports contingency-flow exports without adding missing pairs.
 AC-bus active-power balances copy only assigned regional buses.
 Parameters/multipliers have a separate one-/two-dimensional path.
 Read [result limitations](../how_to/results.md) before adding a new store shape.

@@ -40,7 +40,7 @@ julia --project=. -e 'using Pkg; Pkg.test(; test_args=["test_component_assignmen
 
 Use `julia --project=. -e 'using Pkg; Pkg.test()'` to run all enabled test
 files. Both commands also run the configured Aqua checks; reserve-deliverability
-tests remain disabled. See [Tests](#Tests) for the regression-selection table.
+tests are enabled. See [Tests](#Tests) for the regression-selection table.
 
 ### Step 3: Prebuild and preview
 
@@ -52,7 +52,7 @@ julia --project=docs docs\make.jl
 Start-Process .\docs\build\index.html
 ```
 
-The strict build executes the tutorial and checks documented exports and
+The strict build executes the dispatch and security-constrained examples and checks documented exports and
 references. Open the generated site to check navigation, diagrams, and both
 themes. Keep `DOCS_DEPLOY` unset; deployment is a separate authorized action.
 See [Build documentation locally](#Build-documentation-locally) for details.
@@ -71,8 +71,9 @@ julia --project=docs docs\make.jl
 ```
 
 `docs/make.jl` uses Documenter 0.27, strict checking, all five exported bindings,
-and explicit navigation. The tutorial executes as an `@example` block using
-`docs/examples/decomposition.jl`. A successful build creates `docs/build/index.html`.
+and explicit navigation. File-backed `@example` blocks execute
+`docs/examples/decomposition.jl` and `docs/examples/security_constrained_reserves.jl`.
+A successful build creates `docs/build/index.html`.
 Local builds use non-pretty URLs so pages can also be opened directly.
 The optional `make html` target is run from `docs`, not the repository root.
 
@@ -80,6 +81,7 @@ To run only the example:
 
 ```powershell
 julia --project=docs docs\examples\decomposition.jl
+julia --project=docs docs\examples\security_constrained_reserves.jl
 ```
 
 ### Diagrams and links
@@ -176,8 +178,12 @@ The current test runner consumes filenames without extensions through `ARGS`:
 julia --project=. -e 'using Pkg; Pkg.test(; test_args=["test_component_assignment", "test_hvdc"])'
 ```
 
-The runner performs Aqua checks before file selection. It also skips
-`test_reserve_deliverability.jl` even if explicitly selected.
+The runner performs Aqua checks before file selection. Reserve-deliverability
+tests run in the default suite and can be selected explicitly:
+
+```powershell
+julia --project=. -e 'using Pkg; Pkg.test(; test_args=["test_reserve_deliverability"])'
+```
 
 `test_component_assignment` also launches a fresh Julia process using the
 active test environment, with PowerSystems imports confined to a module.
@@ -200,7 +206,7 @@ never edit installed dependencies to make a test pass.
 | Service propagation and regional reserves          | `test_reserves`                                                |
 | Parameter sources, chronology, monitored-line flow | `test_horizontal_passing`, `test_vertical_passing`             |
 | Hydro budgets and one-dimensional results          | `test_hydro`                                                   |
-| Reserve deliverability                             | Disabled; do not enable without investigating its requirements |
+| Reserve deliverability, outage metadata, sparse flows | `test_reserve_deliverability`, `test_component_assignment` |
 
 For model changes, assert build/run statuses, membership, flow orientation,
 power/energy bases, dimensions, and finite values. Use justified `atol`/`rtol`
