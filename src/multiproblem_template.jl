@@ -413,9 +413,10 @@ Finalize one regional template using available components in `subsystem`.
 
 Remove branch and device models with no available regional components and
 register retained AC branch types with the network model. Populate aggregated
-service models, contributing devices, and device/service associations through
-the upstream helpers. Mutate the template and its contained models, leave
-System membership unchanged, and return `nothing`.
+service models, contributing devices, device/service associations, and outage
+metadata through the upstream helpers. Outages must explicitly monitor components
+modeled by their regional template. Mutate the template and its contained models,
+leave System membership unchanged, and return `nothing`.
 """
 function finalize_template!(
     template::PSI.ProblemTemplate,
@@ -427,6 +428,8 @@ function finalize_template!(
     PSI._populate_aggregated_service_model!(template, sys)
     PSI._populate_contributing_devices!(template, sys)
     PSI._add_services_to_device_model!(template)
+    PSI._build_device_model_outages!(template, sys)
+    PSI._build_service_model_outages!(template, sys)
     return
 end
 
