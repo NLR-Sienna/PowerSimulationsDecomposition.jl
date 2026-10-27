@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Configure security-constrained reserves · PowerSimulationsDecomposition.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script><script src="../../assets/mermaid.js"></script><link href="../../assets/diagrams.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PowerSimulationsDecomposition.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Overview</a></li><li><a class="tocitem" href="../../quick_start_guide/">Getting started</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorials/intro_page/">Two-region dispatch</a></li></ul></li><li><span class="tocitem">How-to guides</span><ul><li><a class="tocitem" href="../subsystems/">Assign subsystems</a></li><li class="is-active"><a class="tocitem" href>Configure security-constrained reserves</a><ul class="internal"><li><a class="tocitem" href="#Separate-failure,-response,-and-monitoring"><span>Separate failure, response, and monitoring</span></a></li><li><a class="tocitem" href="#Choose-the-monitoring-scope"><span>Choose the monitoring scope</span></a></li><li><a class="tocitem" href="#Describe-and-attach-outages"><span>Describe and attach outages</span></a></li><li><a class="tocitem" href="#Configure-before-constructing-the-DecisionModel"><span>Configure before constructing the DecisionModel</span></a></li><li><a class="tocitem" href="#Run-the-complete-example"><span>Run the complete example</span></a></li><li><a class="tocitem" href="#Adapt-the-monitoring-policy"><span>Adapt the monitoring policy</span></a></li><li><a class="tocitem" href="#Troubleshoot-missing-coverage"><span>Troubleshoot missing coverage</span></a></li></ul></li><li><a class="tocitem" href="../results/">Read results</a></li></ul></li><li><span class="tocitem">Explanations</span><ul><li><a class="tocitem" href="../../explanation/decomposition/">Split-area modeling</a></li><li><a class="tocitem" href="../../explanation/state_passing/">State passing</a></li></ul></li><li><span class="tocitem">Formulation library</span><ul><li><a class="tocitem" href="../../formulation_library/network/">Network and state-estimation flows</a></li><li><a class="tocitem" href="../../formulation_library/security_constrained/">Security-constrained integration</a></li></ul></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../api/public/">Public API</a></li><li><a class="tocitem" href="../../api/support/">Support and limitations</a></li><li><a class="tocitem" href="../../api/internal/">Internal extensions</a></li></ul></li><li><span class="tocitem">Developers</span><ul><li><a class="tocitem" href="../../developer/">Repository map</a></li><li><a class="tocitem" href="../../developer/architecture/">Extension lifecycle</a></li><li><a class="tocitem" href="../../developer/workflow/">Workflow and validation</a></li><li><a class="tocitem" href="../../developer/style/">Style guide</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">How-to guides</a></li><li class="is-active"><a href>Configure security-constrained reserves</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Configure security-constrained reserves</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Configure-security-constrained-reserves"><a class="docs-heading-anchor" href="#Configure-security-constrained-reserves">Configure security-constrained reserves</a><a id="Configure-security-constrained-reserves-1"></a><a class="docs-heading-anchor-permalink" href="#Configure-security-constrained-reserves" title="Permalink"></a></h1><p>Create generator outages, explicitly select monitoring coverage, and configure the responding service with <code>SecurityConstrainedRampReserve</code>. Follow <a href="../../quick_start_guide/">setup</a> and <a href="../subsystems/">subsystem assignment</a> first. The runnable example needs the docs environment&#39;s solver and case-builder data.</p><h2 id="Separate-failure,-response,-and-monitoring"><a class="docs-heading-anchor" href="#Separate-failure,-response,-and-monitoring">Separate failure, response, and monitoring</a><a id="Separate-failure,-response,-and-monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#Separate-failure,-response,-and-monitoring" title="Permalink"></a></h2><ul><li>The <strong>outaged generator</strong> loses generation in the contingency.</li><li>The <strong>responding reserve service</strong> supplies the modeled replacement power.</li><li>The <strong>monitored components</strong> have their post-contingency behavior modeled; they are not additional failed equipment.</li></ul><p>Attach the same outage attribute to the failed generator and its responding service within a System. Register a matching named security-constrained <code>ServiceModel</code>. A generator attachment alone does not select a responding service.</p><p>An empty monitoring set is <strong>not</strong> shorthand for all components. PowerSystems accepts an empty set without defining its downstream meaning. In resolved PSI, an empty set warns and contributes no post-contingency variables or constraints. A successful solve alone does not establish contingency coverage.</p><h2 id="Choose-the-monitoring-scope"><a class="docs-heading-anchor" href="#Choose-the-monitoring-scope">Choose the monitoring scope</a><a id="Choose-the-monitoring-scope-1"></a><a class="docs-heading-anchor-permalink" href="#Choose-the-monitoring-scope" title="Permalink"></a></h2><p>&quot;All&quot; means all <strong>eligible, available, actually modeled components</strong> in the consuming model, not all devices present in the System.</p><table><tr><th style="text-align: left">Study</th><th style="text-align: left">Selection</th><th style="text-align: left">Boundary</th></tr><tr><td style="text-align: left">Small full-system reference</td><td style="text-align: left">Explicitly enumerate all eligible modeled AC branches</td><td style="text-align: left">Useful for validating coverage and comparing restricted selections</td></tr><tr><td style="text-align: left">Regional model</td><td style="text-align: left">Select eligible branches owned and modeled by that region</td><td style="text-align: left">Respect branch/network filters; include eligible boundary branches</td></tr><tr><td style="text-align: left">Large targeted study</td><td style="text-align: left">Select outage/monitor pairs justified by the study</td><td style="text-align: left">Document exclusions; unmonitored branches have no security coverage claim</td></tr><tr><td style="text-align: left">Whole-system coverage through regional models</td><td style="text-align: left">Verify coverage across consuming regional models</td><td style="text-align: left">Do not copy a global branch list blindly into every region</td></tr></table><p>More outage/monitor pairs increase construction, solve, and storage work. A subset reduces study coverage; it does not retain an all-branch guarantee. Monitoring every branch for one generator outage is not enumeration of all outages.</p><h3 id="All-eligible-regional-branches"><a class="docs-heading-anchor" href="#All-eligible-regional-branches">All eligible regional branches</a><a id="All-eligible-regional-branches-1"></a><a class="docs-heading-anchor-permalink" href="#All-eligible-regional-branches" title="Permalink"></a></h3><p>The example models <code>Line</code> and <code>MonitoredLine</code>, without additional branch filters, and assigns branches by from-bus area. Under those explicit assumptions:</p><pre><code class="language-julia hljs">monitored_branches = collect(
+    get_components(ACTransmission, sys; subsystem_name=&quot;a&quot;),
+)
+@assert all(get_available, monitored_branches)
+@assert all(branch -&gt; branch isa Union{Line, MonitoredLine}, monitored_branches)
+@assert !isempty(monitored_branches)</code></pre><p>For another template, restrict the list to supported modeled types and effective branch/network filters. Membership alone does not prove eligibility. Omit the subsystem restriction for a full-system model only after verifying eligibility against that model. A branch&#39;s presence in regional PTDF network context does not automatically make it an eligible regional monitor.</p><h3 id="A-selected-subset"><a class="docs-heading-anchor" href="#A-selected-subset">A selected subset</a><a id="A-selected-subset-1"></a><a class="docs-heading-anchor-permalink" href="#A-selected-subset" title="Permalink"></a></h3><p>Start from the verified eligible list and reject missing requested names:</p><pre><code class="language-julia hljs">eligible_by_name = Dict(get_name(branch) =&gt; branch for branch in monitored_branches)
+selected_names = [&quot;1_1&quot;]
+@assert all(name -&gt; haskey(eligible_by_name, name), selected_names)
+selected_branches = [eligible_by_name[name] for name in selected_names]</code></pre><p>Do not silently intersect an invalid request with available branches: that silently changes the study&#39;s requested coverage.</p><h2 id="Describe-and-attach-outages"><a class="docs-heading-anchor" href="#Describe-and-attach-outages">Describe and attach outages</a><a id="Describe-and-attach-outages-1"></a><a class="docs-heading-anchor-permalink" href="#Describe-and-attach-outages" title="Permalink"></a></h2><p>The script defines three <strong>example-local helpers</strong>, not exported package APIs:</p><ul><li><code>assign_example_subsystems!</code> assigns areas, buses, injections, and branches.</li><li><code>make_outage_specifications</code> returns typed named tuples describing failed generator names, responding reserve types/names, and explicit monitor names.</li><li><code>add_outages_to_systems!</code> resolves the specifications separately in each System and attaches one outage object to its generators and services.</li></ul><p>For example, this specification selects one monitored line rather than all eligible lines. Use it instead of that region&#39;s all-branch specification in a fresh run, not as an additional duplicate outage:</p><pre><code class="language-julia hljs">specification = (
+    outage_generators=[&quot;Sundance_1&quot;],
+    responding_reserves=Dict{DataType, String}(VariableReserve{ReserveUp} =&gt; &quot;Reserve1_1&quot;),
+    monitored_components=[&quot;1_1&quot;],
+)</code></pre><p>Monitoring names in these helper specifications are resolved to actual devices before <code>GeometricDistributionForcedOutage</code> is constructed. The PowerSystems constructor accepts device objects or UUIDs and stores UUIDs internally. Resolve components in each independently created System: matching names do not guarantee matching UUIDs. Preserve the reserve&#39;s contributing-device associations and assign/register its service in the intended region.</p><h2 id="Configure-before-constructing-the-DecisionModel"><a class="docs-heading-anchor" href="#Configure-before-constructing-the-DecisionModel">Configure before constructing the DecisionModel</a><a id="Configure-before-constructing-the-DecisionModel-1"></a><a class="docs-heading-anchor-permalink" href="#Configure-before-constructing-the-DecisionModel" title="Permalink"></a></h2><p>To replace an existing outage&#39;s monitoring set before model construction:</p><pre><code class="language-julia hljs">set_monitored_components!(outage, selected_branches)</code></pre><p><code>add_monitored_components!</code> adds to the current set; <code>clear_monitored_components!</code> empties it and does not enable all-component monitoring. These are PowerSystems APIs.</p><p>After constructing a <code>DecisionModel</code>, recreate it from the updated System and template if monitoring changes. Regional finalization has already populated outage metadata; changing the System does not refresh that metadata or existing constraints. Users should not call PSI&#39;s internal metadata builders themselves.</p><h2 id="Run-the-complete-example"><a class="docs-heading-anchor" href="#Run-the-complete-example">Run the complete example</a><a id="Run-the-complete-example-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-complete-example" title="Permalink"></a></h2><p>The script follows the active two-area 10-bus regression. It uses dispatch, not unit commitment. Region a monitors six internal lines and <code>inter_area_line</code>; b monitors six internal lines.</p><p>The fixture removes thermal ramp limits and makes both Sundance generators must-run at a minimum of 1.0 system-base p.u. These demonstration assumptions isolate contingency/export behavior; they are not production operating data or proof of central/decomposed equivalence. Outage parameters are fixture values, not a stochastic reliability simulation.</p><p>From the repository root:</p><pre><code class="language-powershell hljs">julia --project=docs docs\examples\security_constrained_reserves.jl
+# Checked two generator outages, 13 monitored branch/outage pairs, and 24 hourly results.</code></pre><p>The script checks successful build/solve statuses, exact outage/branch identities, all 24 time indices, finite flows, and reserve-deployment conservation. The raw standalone values used by its checks are system-base p.u.; see <a href="../results/#Contingency-flow-results">contingency results</a>.</p><pre><code class="language-julia hljs">using Dates
+using HiGHS
+using JuMP
+import InfrastructureSystems as IS
+using PowerSimulations
+using PowerSimulationsDecomposition
+using PowerSystemCaseBuilder
+using PowerSystems
+
+&quot;&quot;&quot;
+    assign_example_subsystems!(sys::System, area_to_subsystem::Dict{String, String})
+
+Assign areas, buses, injections, and AC branches using this example&#39;s from-bus policy.
+&quot;&quot;&quot;
+function assign_example_subsystems!(sys::System, area_to_subsystem::Dict{String, String})
+    for subsystem in unique(collect(values(area_to_subsystem)))
+        add_subsystem!(sys, subsystem)
+    end
+    # Area membership does not propagate to buses or their attached devices.
+    for area in get_components(Area, sys)
+        add_component_to_subsystem!(sys, area_to_subsystem[get_name(area)], area)
+    end
+    for bus in get_components(ACBus, sys)
+        subsystem = area_to_subsystem[get_name(get_area(bus))]
+        add_component_to_subsystem!(sys, subsystem, bus)
+    end
+    for device in get_components(StaticInjection, sys)
+        subsystem = area_to_subsystem[get_name(get_area(get_bus(device)))]
+        add_component_to_subsystem!(sys, subsystem, device)
+    end
+    # Ownership selects the regional model; it does not reverse branch flow signs.
+    for branch in get_components(ACTransmission, sys)
+        subsystem = area_to_subsystem[get_name(get_area(get_from(get_arc(branch))))]
+        add_component_to_subsystem!(sys, subsystem, branch)
+    end
+    return
+end
+
+&quot;&quot;&quot;
+    make_outage_specifications(sys::System)
+
+Describe each generator outage, responding reserve, and explicit monitored branch set.
+&quot;&quot;&quot;
+function make_outage_specifications(sys::System)
+    specifications = @NamedTuple{
+        outage_generators::Vector{String},
+        responding_reserves::Dict{DataType, String},
+        monitored_components::Vector{String},
+    }[]
+    for (subsystem, generator_name, reserve_name) in
+        ((&quot;a&quot;, &quot;Sundance_1&quot;, &quot;Reserve1_1&quot;), (&quot;b&quot;, &quot;Sundance_2&quot;, &quot;Reserve1_2&quot;))
+        # All regional branches are eligible here: both types are modeled without filters.
+        monitored_branches =
+            collect(get_components(ACTransmission, sys; subsystem_name=subsystem))
+        @assert all(get_available, monitored_branches)
+        @assert all(
+            (branch::ACTransmission) -&gt; branch isa Union{Line, MonitoredLine},
+            monitored_branches,
+        )
+        @assert !isempty(monitored_branches)
+        push!(
+            specifications,
+            (
+                outage_generators=[generator_name],
+                responding_reserves=Dict{DataType, String}(
+                    VariableReserve{ReserveUp} =&gt; reserve_name,
+                ),
+                monitored_components=get_name.(monitored_branches),
+            ),
+        )
+    end
+    return specifications
+end
+
+&quot;&quot;&quot;
+    add_outages_to_systems!(systems::Vector{System}, outage_specifications)
+
+Resolve each specification in each System and attach its outage to generators and reserves.
+&quot;&quot;&quot;
+function add_outages_to_systems!(
+    systems::Vector{System},
+    outage_specifications::Vector{
+        @NamedTuple{
+            outage_generators::Vector{String},
+            responding_reserves::Dict{DataType, String},
+            monitored_components::Vector{String},
+        }
+    },
+)
+    for specification in outage_specifications
+        for sys in systems
+            # Resolve objects per System: names can match even when component UUIDs differ.
+            monitored_components = [
+                get_component(ACTransmission, sys, name) for
+                name in specification.monitored_components
+            ]
+            @assert !isempty(monitored_components)
+            @assert all(
+                (component::Union{Nothing, ACTransmission}) -&gt; !isnothing(component),
+                monitored_components,
+            )
+            outage = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery=10.0,
+                outage_transition_probability=1.0,
+                monitored_components=monitored_components,
+            )
+            for generator_name in specification.outage_generators
+                generator = get_component(PowerSystems.Generator, sys, generator_name)
+                add_supplemental_attribute!(sys, generator, outage)
+            end
+            # The same attribute links failed equipment to its responding service.
+            for (reserve_type, reserve_name) in specification.responding_reserves
+                reserve = get_component(reserve_type, sys, reserve_name)
+                add_supplemental_attribute!(sys, reserve, outage)
+            end
+        end
+    end
+    return
+end
+
+# 1. Load forecast-backed data and assign regional membership explicitly.
+sys = build_system(PSISystems, &quot;two_area_pjm_DA&quot;; add_reserves=true)
+area_to_subsystem = Dict(&quot;Area1&quot; =&gt; &quot;a&quot;, &quot;Area2&quot; =&gt; &quot;b&quot;)
+assign_example_subsystems!(sys, area_to_subsystem)
+
+# 2. Isolate the fixture&#39;s contingency behavior, not realistic ramp-limited operation.
+for generator in get_components(ThermalStandard, sys)
+    set_ramp_limits!(generator, nothing)
+end
+for generator_name in (&quot;Sundance_1&quot;, &quot;Sundance_2&quot;)
+    generator = get_component(ThermalStandard, sys, generator_name)
+    set_must_run!(generator, true)
+    set_active_power_limits!(generator, (min=1.0, max=2.0))
+end
+
+# 3. Declare modeled branch types before choosing their monitoring coverage.
+template = MultiProblemTemplate(NetworkModel(SplitAreaPTDFPowerModel), [&quot;a&quot;, &quot;b&quot;])
+set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
+set_device_model!(template, PowerLoad, StaticPowerLoad)
+set_device_model!(template, Line, StaticBranch)
+set_device_model!(template, MonitoredLine, StaticBranch)
+
+# 4. Specify and attach outages before DecisionModel finalizes their metadata.
+outage_specifications = make_outage_specifications(sys)
+add_outages_to_systems!([sys], outage_specifications)
+@assert length(outage_specifications[1].monitored_components) == 7
+@assert length(outage_specifications[2].monitored_components) == 6
+
+# 5. Assign each responding service and register its security-constrained formulation.
+for (subsystem, reserve_name) in ((&quot;a&quot;, &quot;Reserve1_1&quot;), (&quot;b&quot;, &quot;Reserve1_2&quot;))
+    reserve = get_component(VariableReserve{ReserveUp}, sys, reserve_name)
+    add_component_to_subsystem!(sys, subsystem, reserve)
+    set_service_model!(
+        template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            SecurityConstrainedRampReserve,
+            reserve_name,
+        ),
+        subsystem,
+    )
+end
+
+# 6. Build and solve the hourly dispatch; this is not a unit-commitment formulation.
+problem = DecisionModel(
+    MultiRegionProblem,
+    template,
+    sys;
+    name=&quot;RegionalSecurityConstrainedDispatch&quot;,
+    horizon=Hour(24),
+    interval=Hour(1),
+    resolution=Hour(1),
+    optimizer=optimizer_with_attributes(HiGHS.Optimizer, &quot;log_to_console&quot; =&gt; false),
+)
+@assert build!(problem; output_dir=mktempdir()) == PowerSimulations.ModelBuildStatus.BUILT
+@assert solve!(problem) == PowerSimulations.RunStatus.SUCCESSFULLY_FINALIZED
+results = OptimizationProblemResults(problem)
+
+# 7. Check exported sparse flows and reserve conservation, not merely solve success.
+for specification in outage_specifications
+    reserve_type, reserve_name = only(specification.responding_reserves)
+    reserve = get_component(reserve_type, sys, reserve_name)
+    outage = only(get_supplemental_attributes(GeometricDistributionForcedOutage, reserve))
+    flow_key = PowerSimulations.ExpressionKey{
+        PostContingencyBranchFlow,
+        VariableReserve{ReserveUp},
+    }(
+        reserve_name,
+    )
+    deployment_key = PowerSimulations.VariableKey{
+        PostContingencyActivePowerReserveDeploymentVariable,
+        VariableReserve{ReserveUp},
+    }(
+        reserve_name,
+    )
+    flows = get_expression_values(results)[flow_key]
+    deployment = get_variable_values(results)[deployment_key]
+    # Raw standalone tables encode outage UUID and branch in one name; values are p.u.
+    outage_id = string(IS.get_uuid(outage))
+    expected_names =
+        Set(outage_id * &quot;__&quot; * name for name in specification.monitored_components)
+    @assert Set(flows.name) == expected_names
+    @assert Set(flows.time_index) == Set(1:24)
+    @assert size(flows, 1) == 24 * length(expected_names)
+    @assert all(isfinite, flows.value)
+    for time_index in 1:24
+        @assert count(==(time_index), flows.time_index) == length(expected_names)
+        @assert isapprox(
+            sum(deployment.value[deployment.time_index .== time_index]),
+            1.0;
+            atol=1e-6,
+        )
+    end
+end
+println(
+    &quot;Checked two generator outages, 13 monitored branch/outage pairs, and 24 hourly results.&quot;,
+)
+</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: Loaded time series from storage file existing=/home/runner/.julia/packages/PowerSystemCaseBuilder/zuCHR/data/serialized_system/42aebdbac635602b2981b63053654e11e58a163eba9cf46de382a8d76cf4437e/two_area_pjm_DA_time_series_storage.h5 new=/tmp/jl_rJWMx9 compression=InfrastructureSystems.CompressionSettings(false, InfrastructureSystems.CompressionTypesModule.CompressionTypes.DEFLATE = 1, 3, true)
+[ Info: rating 1000.0 MW for inter_area_line is outside the expected range (min = 327.0, max = 797.0) MW for Line at a 230.0 kV Voltage level.
+┌ Info: Auto-transforming SingleTimeSeries to DeterministicSingleTimeSeries
+│   horizon = 1 day
+└   interval = 1 hour
+┌ Warning: Outage 1f03db75-8f6d-4365-8d29-cc199ebc3f95 is attached to service Reserve1_2 (PowerSystems.VariableReserve{PowerSystems.ReserveUp}) but the template does not include a security-constrained ServiceModel for it; the outage will not contribute any post-contingency reserve constraints.
+└ @ PowerSimulations ~/.julia/packages/PowerSimulations/m0vI1/src/operation/template_validation.jl:746
+┌ Warning: PowerSystems.MonitoredLine is modeled but not in subsystem b so removed from the template
+└ @ PowerSimulationsDecomposition ~/work/PowerSimulationsDecomposition.jl/PowerSimulationsDecomposition.jl/src/multiproblem_template.jl:467
+┌ Warning: Outage a463bbe1-8e2e-44ab-9bbc-7197950f164f is attached to service Reserve1_1 (PowerSystems.VariableReserve{PowerSystems.ReserveUp}) but the template does not include a security-constrained ServiceModel for it; the outage will not contribute any post-contingency reserve constraints.
+└ @ PowerSimulations ~/.julia/packages/PowerSimulations/m0vI1/src/operation/template_validation.jl:746
+Checked two generator outages, 13 monitored branch/outage pairs, and 24 hourly results.</code></pre><h2 id="Adapt-the-monitoring-policy"><a class="docs-heading-anchor" href="#Adapt-the-monitoring-policy">Adapt the monitoring policy</a><a id="Adapt-the-monitoring-policy-1"></a><a class="docs-heading-anchor-permalink" href="#Adapt-the-monitoring-policy" title="Permalink"></a></h2><p>The RTS regression monitors <code>CA-1</code> and <code>A28</code> for the outage of <code>313_CC_1</code> and response service <code>Spin_Up_R3</code>. Its existing to-bus ownership assigns both lines to subsystem a, containing areas 1 and 3; <code>CB-1</code> and <code>AB1</code> belong to b. That is different from the example&#39;s from-bus policy. Do not assume internal-only monitoring or reverse branch orientation to change ownership.</p><p>RTS checks five realized flow rows against solved regional expressions in MW and preserves reserve-deployment conservation checks. Its in-memory multistage configuration does not establish support for every storage/realized-reader path.</p><h2 id="Troubleshoot-missing-coverage"><a class="docs-heading-anchor" href="#Troubleshoot-missing-coverage">Troubleshoot missing coverage</a><a id="Troubleshoot-missing-coverage-1"></a><a class="docs-heading-anchor-permalink" href="#Troubleshoot-missing-coverage" title="Permalink"></a></h2><table><tr><th style="text-align: left">Symptom</th><th style="text-align: left">Check and recovery</th></tr><tr><td style="text-align: left">Empty-monitor warning</td><td style="text-align: left">Supply a nonempty explicit eligible set; empty does not mean all</td></tr><tr><td style="text-align: left">No deployment or flow key</td><td style="text-align: left">Check generator/service attachments and the matching named security-constrained service model</td></tr><tr><td style="text-align: left">Missing branch or monitor</td><td style="text-align: left">Check availability, modeled types, filters, ownership, and System UUID identity; recreate the model</td></tr><tr><td style="text-align: left">Warning about an unmodeled responding service</td><td style="text-align: left">Regional validation can see another region&#39;s service; verify the intended region&#39;s keys and coverage rather than dismissing all warnings</td></tr><tr><td style="text-align: left">Missing <code>AreaInterchange</code> monitor under PTDF</td><td style="text-align: left">That path does not build these tie-flow expressions; see the network-specific reference</td></tr></table><p>Read <a href="../../formulation_library/security_constrained/">security-constrained integration</a> for formulation-specific limits and the distinction between observing a flow and enforcing its rating.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../subsystems/">« Assign subsystems</a><a class="docs-footer-nextpage" href="../results/">Read results »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 27 October 2026 16:49">Tuesday 27 October 2026</span>. Using Julia version 1.13.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
