@@ -8,17 +8,18 @@ between processes in parallel programs. `MPI.jl` provides the Julia interface.
 This package includes MPI-related scaffolding, but its MPI execution path is
 incomplete and is not selected by the public model constructor.
 
-| Behavior                               | Evidence                                | Boundary                                                                                       |
-|:-------------------------------------- |:--------------------------------------- |:---------------------------------------------------------------------------------------------- |
-| Explicit AC branch membership          | `test_component_assignment.jl`          | Fixture uses from-bus assignment; no automatic ownership policy                                |
-| Static injector/bus consistency        | `test_hvdc.jl`, sequential build checks | Checks available modeled injectors, not full partition coverage                                |
-| Two-terminal HVDC membership           | `test_hvdc.jl`                          | Modeled endpoints must be in the same assigned subsystem                                       |
-| Regional reserve construction          | `test_reserves.jl`                      | `RangeReserve` template propagation and regional constraint counts                             |
-| Horizontal state passing               | `test_horizontal_passing.jl`            | Hourly prior-execution injection comparison; selected branch comparisons with/without emulator |
-| Vertical state passing                 | `test_vertical_passing.jl`              | Same-window injection comparison and selected branch comparison                                |
-| Hydro budget / one-dimensional results | `test_hydro.jl`                         | HydroPowerSimulations budget formulation in the RTS fixture                                    |
-| Reserve deliverability                 | `test_reserve_deliverability.jl`, `test_component_assignment.jl` | Active generator-outage metadata, 10-bus reference/split monitoring, RTS selected-flow export and reserve conservation |
-| MPI                                    | `algorithms/mpi_parallel_algorithm.jl`  | **Incomplete**; unresolved variables and missing execution/aggregation implementation          |
+| Behavior                               | Evidence                                                         | Boundary                                                                                                                             |
+|:-------------------------------------- |:---------------------------------------------------------------- |:------------------------------------------------------------------------------------------------------------------------------------ |
+| Explicit AC branch membership          | `test_component_assignment.jl`                                   | Fixture uses from-bus assignment; no automatic ownership policy                                                                      |
+| Static injector/bus consistency        | `test_hvdc.jl`, sequential build checks                          | Checks available modeled injectors, not full partition coverage                                                                      |
+| Two-terminal HVDC membership           | `test_hvdc.jl`                                                   | Modeled endpoints share the HVDC's subsystem; split-area PTDF also requires both endpoint areas there                                |
+| Lossless HVDC balance contributions    | `test_hvdc.jl`                                                   | `TwoTerminalGenericHVDCLine` with `HVDCTwoTerminalLossless`: nodal/area signs and same-area cancellation; not all lossy formulations |
+| Regional reserve construction          | `test_reserves.jl`                                               | `RangeReserve` template propagation and regional constraint counts                                                                   |
+| Horizontal state passing               | `test_horizontal_passing.jl`                                     | Hourly prior-execution injection comparison; selected branch comparisons with/without emulator                                       |
+| Vertical state passing                 | `test_vertical_passing.jl`                                       | Same-window injection comparison and selected branch comparison                                                                      |
+| Hydro budget / one-dimensional results | `test_hydro.jl`                                                  | HydroPowerSimulations budget formulation in the RTS fixture                                                                          |
+| Reserve deliverability                 | `test_reserve_deliverability.jl`, `test_component_assignment.jl` | Active generator-outage metadata, 10-bus reference/split monitoring, RTS selected-flow export and reserve conservation               |
+| MPI                                    | `algorithms/mpi_parallel_algorithm.jl`                           | **Incomplete**; unresolved variables and missing execution/aggregation implementation                                                |
 
 ## Algorithms and results
 
@@ -56,7 +57,7 @@ incomplete and is not selected by the public model constructor.
 
 ## Compatibility and validation environments
 
-The dependency upgrade targets PSI 0.38.4, PNM 0.24.4, PSY 5.12.3, and
+The dependency upgrade targets PSI 0.38.5, PNM 0.24.5, PSY 5.12.4, and
 InfrastructureSystems 3.6.3, with compatible updates allowed by `Project.toml`.
 These bounds describe the requested dependency baseline, not proof that every
 extension works with it. Validate runtime compatibility with the test suite.

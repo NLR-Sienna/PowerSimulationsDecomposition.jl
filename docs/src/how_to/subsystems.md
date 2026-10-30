@@ -75,9 +75,60 @@ available, modeled components:
 Omitting the HVDC model bypasses these HVDC modeling checks; it does **not** model
 the interregional HVDC transfer.
 
-`test/test_hvdc.jl` covers these build success/failure cases. The checks do not
-prove complete coverage, disjoint ownership, or conservation for an arbitrary
-user partition.
+#### Allowed and rejected HVDC assignments
+
+An area is the component referenced by `get_area(bus)`. A subsystem is a named
+collection of explicitly assigned components. They are different concepts: a
+subsystem can contain several areas, and assigning a bus to a subsystem does not
+change its area.
+
+For an available HVDC assigned to `a` and modeled with
+`SplitAreaPTDFPowerModel`, the following configurations illustrate the checks:
+
+| Terminal areas          | Terminal bus memberships     | Area memberships                                  | Outcome                         |
+|:----------------------- |:---------------------------- |:------------------------------------------------- |:------------------------------- |
+| Both in area `1`        | Both in `a`                  | Area `1` in `a`                                   | Allowed                         |
+| Areas `1` and `3`       | Both in `a`                  | Both areas in `a`                                 | Allowed                         |
+| Areas `1` and `3`       | Both in `a`                  | Area `3` absent from `a`, even if assigned to `b` | Rejected: missing terminal area |
+| Same or different areas | One terminal absent from `a` | Any                                               | Rejected: missing terminal bus  |
+
+Thus, **cross-area HVDC is allowed inside a subsystem; cross-subsystem HVDC is
+not supported by this regional construction**. These checks do not require the
+two terminals to share an area, or prove complete coverage, disjoint ownership,
+or conservation for an arbitrary user partition.
+
+The two positive cases in `test/test_hvdc.jl` use fresh
+`modified_RTS_GMLC_DA_sys` fixtures:
+
+  - **Same-area case:** change the ending bus's area to the starting bus's area
+    before assigning subsystems. Keep areas `1` in `a` and `2` and `3` in `b`.
+    Assign both terminal buses and the HVDC to `a`.
+  - **Different-area case:** leave both buses' areas unchanged. Assign areas `1`
+    and `3`, their terminal buses, and the HVDC to `a`; keep area `2` in `b`.
+
+The first case changes the test System's area definition, not the HVDC arc or
+flow direction:
+
+```julia
+hvdc = get_component(TwoTerminalGenericHVDCLine, sys, "DC1")
+from_bus = get_from(get_arc(hvdc))
+to_bus = get_to(get_arc(hvdc))
+set_area!(to_bus, get_area(from_bus))
+```
+
+This snippet assumes a fresh RTS fixture and does not assign subsystem
+memberships. Afterward, use the public membership APIs above to assign areas,
+buses, attached modeled injections, and the HVDC consistently. Do not change
+real-system area definitions merely to bypass validation; that changes which
+area balance receives the bus's injections.
+
+The regressions configure `HVDCTwoTerminalLossless` for
+`TwoTerminalGenericHVDCLine`. They check `-flow` at the starting bus, `+flow` at
+the ending bus, the corresponding area contributions, and cancellation in the
+area balance when both terminals share an area. They do not establish support
+for every lossy HVDC formulation or guarantee a feasible solve for arbitrary
+limits and injections. See [HVDC balance behavior](../explanation/decomposition.md#HVDC-area-balances-and-dependency-compatibility)
+for the upstream change behind these checks.
 
 ## Populate the template
 
@@ -144,7 +195,8 @@ See [state passing](../explanation/state_passing.md).
 
   - Subsystem names match the template keys.
   - Areas, buses, and modeled static injections have the intended membership.
-  - Modeled HVDC endpoints satisfy the same-subsystem restriction.
+  - Modeled HVDC endpoints satisfy the same-subsystem restriction; with
+    `SplitAreaPTDFPowerModel`, both endpoint areas are also assigned there.
   - Modeled branches have explicit ownership and compatible filters.
   - Services and contributing devices retain their intended associations.
   - Forecast horizon, interval, and resolution cover every execution.

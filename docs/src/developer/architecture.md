@@ -62,8 +62,8 @@ and the separate [state-passing sequences](../explanation/state_passing.md).
     `MultiOptimizationContainer(SequentialAlgorithm, ...)`.
  3. Construction deep-copies/finalizes the template. Regional device/branch
     models without available components are removed; service contributors and
-   device-service relationships and upstream device/service outage metadata
-   are populated. Configure outage attachments and monitoring before construction.
+    device-service relationships and upstream device/service outage metadata
+    are populated. Configure outage attachments and monitoring before construction.
  4. Time-series validation requires forecast data. The container constructor
     independently rejects multiple resolutions and abstract time-series types.
 
@@ -83,9 +83,10 @@ single combined regional JuMP problem.
  2. `instantiate_network_model`: set each regional subsystem, intersect branch
     filter functions with membership, and instantiate PSI network data.
  3. `handle_initial_conditions!`: currently **empty** for this model.
- 4. `PSI.build_model!`: dispatch into sequential `build_impl!`, which calls PSI's
-    regional build, constructs bus maps, checks static-injector and modeled-HVDC
-    membership, and checks containers.
+ 4. `PSI.build_model!`: dispatch into sequential `build_impl!`, which first
+    constructs bus maps and checks static-injector and modeled-HVDC membership.
+    Split-area PTDF also checks HVDC terminal-area membership. Only after these
+    checks does it call PSI's regional builds, followed by container checks.
  5. `_map_containers`: union dense result axes, allocate joint numeric arrays,
     preserve sparse tuple-key unions through `_map_sparse_containers!`, and merge
     parameter arrays/multipliers/attributes.

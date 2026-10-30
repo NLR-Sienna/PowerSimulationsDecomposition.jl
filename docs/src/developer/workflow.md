@@ -2,7 +2,7 @@
 
 Use a branch from `main`, preserve unrelated/staged changes, and inspect
 `Project.toml`, the active manifest, source, tests, and workflows before editing.
-The dependency upgrade targets PSI 0.38.4 or a compatible patch release.
+The dependency upgrade targets PSI 0.38.5 or a compatible patch release.
 Check extension compatibility against the resolved released source; do not
 substitute a neighboring development checkout.
 
@@ -70,7 +70,7 @@ julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.in
 julia --project=docs docs\make.jl
 ```
 
-`docs/make.jl` uses Documenter 0.27, strict checking, all five exported bindings,
+`docs/make.jl` uses Documenter 1.19 with `warnonly=false`, all five exported bindings,
 and explicit navigation. File-backed `@example` blocks execute
 `docs/examples/decomposition.jl` and `docs/examples/security_constrained_reserves.jl`.
 A successful build creates `docs/build/index.html`.
@@ -199,13 +199,13 @@ are resolved together; do not assume `julia --project=test` recreates that
 sandbox. Report resolver/import failures separately from model assertions and
 never edit installed dependencies to make a test pass.
 
-| Changed surface                                    | Relevant files                                                 |
-|:-------------------------------------------------- |:-------------------------------------------------------------- |
-| Template membership, branch filtering              | `test_component_assignment`, `test_hvdc`                       |
-| Static injection and bus consistency, modeled HVDC | `test_hvdc`                                                    |
-| Service propagation and regional reserves          | `test_reserves`                                                |
-| Parameter sources, chronology, monitored-line flow | `test_horizontal_passing`, `test_vertical_passing`             |
-| Hydro budgets and one-dimensional results          | `test_hydro`                                                   |
+| Changed surface                                       | Relevant files                                             |
+|:----------------------------------------------------- |:---------------------------------------------------------- |
+| Template membership, branch filtering                 | `test_component_assignment`, `test_hvdc`                   |
+| Static injection and bus consistency, modeled HVDC    | `test_hvdc`                                                |
+| Service propagation and regional reserves             | `test_reserves`                                            |
+| Parameter sources, chronology, monitored-line flow    | `test_horizontal_passing`, `test_vertical_passing`         |
+| Hydro budgets and one-dimensional results             | `test_hydro`                                               |
 | Reserve deliverability, outage metadata, sparse flows | `test_reserve_deliverability`, `test_component_assignment` |
 
 For model changes, assert build/run statuses, membership, flow orientation,
@@ -227,6 +227,8 @@ repository**, including Markdown. Inspect the diff and never discard unrelated
 user changes. For documentation-only edits, use a targeted `format` invocation
 with the options in that script rather than inadvertently reformatting all
 computational source. Follow `.editorconfig` and the [style guide](style.md).
+The formatter environment requires Julia 1.11+ and JuliaFormatter 2.14.2 or a
+compatible release; the package itself retains its Julia 1.10 minimum.
 
 Run `git diff --check` for whitespace errors. Record exact validation commands,
 outcomes, resolved dependency versions, and remaining blockers in the pull
