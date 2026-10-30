@@ -14,7 +14,7 @@ makedocs(;
     ),
     sitename="PowerSimulationsDecomposition.jl",
     authors="PowerSimulationsDecomposition.jl contributors",
-    strict=true,
+    warnonly=false,
     checkdocs=:exports,
     pages=[
         "Overview" => "index.md",

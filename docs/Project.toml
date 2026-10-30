@@ -8,8 +8,11 @@ PowerSimulationsDecomposition = "bed98974-b02a-5e2f-9ee0-a103f5c450dd"
 PowerSystemCaseBuilder = "f00506e0-b84f-492a-93c2-c0a9afc4364e"
 PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 
+[sources]
+PowerSimulationsDecomposition = {path = ".."}
+
 [compat]
-Documenter = "0.27"
+Documenter = "1.19.0"
 HiGHS = "1"
 InfrastructureSystems = "3.6.3"
 JuMP = "1.28"
