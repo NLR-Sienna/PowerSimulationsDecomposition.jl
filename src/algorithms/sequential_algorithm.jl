@@ -2,11 +2,11 @@
     build_impl!(container::MultiOptimizationContainer{SequentialAlgorithm},
                 template::MultiProblemTemplate, sys::PSY.System)
 
-Build each regional optimization problem and validate the resulting containers.
+Validate component membership and build each regional optimization problem.
 
-Use each regional template to populate its corresponding optimization container,
-then populate bus maps and validate component membership with
-[`build_main_problem!`](@ref). Check both regional and main optimization
+Populate bus maps and validate component membership with
+[`build_main_problem!`](@ref) before using each regional template to populate its
+corresponding optimization container. Check both regional and main optimization
 containers through PowerSimulations and return `nothing`.
 
 Regional traversal follows dictionary iteration, not sorted subsystem order.
@@ -18,12 +18,12 @@ function build_impl!(
     template::MultiProblemTemplate,
     sys::PSY.System,
 )
+    build_main_problem!(container, template, sys)
+
     for (index, sub_template) in get_sub_templates(template)
         @info "Building Subproblem $index" _group = PSI.LOG_GROUP_OPTIMIZATION_CONTAINER
         PSI.build_impl!(get_subproblem(container, index), sub_template, sys)
     end
-
-    build_main_problem!(container, template, sys)
 
     check_optimization_container(container)
 
@@ -40,7 +40,8 @@ Store the available AC bus numbers for each region in
 `container.subproblem_bus_map`. Require each available modeled static injector
 to share its subsystem with its attached bus. When an HVDC model is configured,
 require both terminal buses of each available regional HVDC component to belong
-to that region.
+to that region. For [`SplitAreaPTDFPowerModel`](@ref), also require each terminal
+bus's area to be assigned to the region.
 
 Throw `IS.ConflictingInputsError` for inconsistent membership and return
 `nothing` otherwise. Despite its name, this method does not construct a central
@@ -83,8 +84,35 @@ function build_main_problem!(
                     )
                 end
             end
+            network_model = PSI.get_network_model(get_sub_templates(template)[k])
+            if !(network_model isa PSI.NetworkModel{SplitAreaPTDFPowerModel})
+                continue
+            end
+            _validate_hvdc_terminal_areas(sys, k, subsystem_hvdcs)
         end
     end
+end
+
+function _validate_hvdc_terminal_areas(
+    sys::PSY.System,
+    subsystem::String,
+    hvdcs::IS.FlattenIteratorWrapper{<:PSY.TwoTerminalHVDC},
+)
+    subsystem_areas = PSY.get_components(PSY.Area, sys; subsystem_name=subsystem)
+    for hvdc in hvdcs
+        for bus in (PSY.get_from(PSY.get_arc(hvdc)), PSY.get_to(PSY.get_arc(hvdc)))
+            area = PSY.get_area(bus)
+            if area ∉ subsystem_areas
+                area_name = isnothing(area) ? "nothing" : PSY.get_name(area)
+                throw(
+                    IS.ConflictingInputsError(
+                        "HVDC $(PSY.get_name(hvdc)) terminal bus $(PSY.get_name(bus)) belongs to area $area_name, which is not assigned to subsystem $subsystem. Assign the terminal area to the same subsystem as the HVDC.",
+                    ),
+                )
+            end
+        end
+    end
+    return
 end
 
 function _has_hvdc_model(template::MultiProblemTemplate)

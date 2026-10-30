@@ -63,6 +63,63 @@
     )
 end
 
+@testset "RTS regions without monitored lines build with branch bounds" begin
+    for assign_monitored_lines in (true, false)
+        @testset "Assign monitored lines: $assign_monitored_lines" begin
+            sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+            add_monitored_lines!(
+                sys,
+                [(name="A28", flow_limit=1.0), (name="B28", flow_limit=1.0)],
+            )
+            area_subsystem_map = Dict("1" => "a", "2" => "b", "3" => "c")
+            make_subsystems!(sys, area_subsystem_map)
+            for branch in get_components(ACTransmission, sys)
+                if branch isa MonitoredLine && !assign_monitored_lines
+                    continue
+                end
+                area_name = get_name(get_area(get_from(get_arc(branch))))
+                add_component_to_subsystem!(sys, area_subsystem_map[area_name], branch)
+            end
+            template =
+                MultiProblemTemplate(NetworkModel(SplitAreaPTDFPowerModel), ["a", "b", "c"])
+            set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            set_device_model!(template, Line, StaticBranchUnbounded)
+            set_device_model!(template, MonitoredLine, StaticBranchBounds)
+            problem = DecisionModel(
+                MultiRegionProblem,
+                template,
+                sys;
+                horizon=Hour(1),
+                interval=Hour(1),
+                resolution=Hour(1),
+                optimizer=HiGHS_optimizer_small_gap,
+            )
+            @test build!(problem; output_dir=mktempdir()) == PSI.ModelBuildStatus.BUILT
+            for subsystem in ("a", "b", "c")
+                expected_names =
+                    assign_monitored_lines && subsystem != "c" ?
+                    [subsystem == "a" ? "A28" : "B28"] : String[]
+                @test Set(
+                    get_name.(get_components(MonitoredLine, sys; subsystem_name=subsystem)),
+                ) == Set(expected_names)
+                @test (
+                    PSI.get_model(PSI.get_template(problem), MonitoredLine, subsystem) ===
+                    nothing
+                ) == isempty(expected_names)
+                container = PSI.get_optimization_container(problem).subproblems[subsystem]
+                flow_key = PSI.VariableKey{FlowActivePowerVariable, MonitoredLine}("")
+                @test haskey(PSI.get_variables(container), flow_key) ==
+                      !isempty(expected_names)
+                if !isempty(expected_names)
+                    @test Set(axes(PSI.get_variables(container)[flow_key], 1)) ==
+                          Set(expected_names)
+                end
+            end
+        end
+    end
+end
+
 @testset "Test component assignment without imports in Main" begin
     # The harness imports PowerSystems into Main, so module isolation needs a fresh process.
     test_environment = dirname(Base.active_project())
