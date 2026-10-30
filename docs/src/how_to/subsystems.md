@@ -57,14 +57,23 @@ container as a disconnected, copied network.
 
 ### HVDC and static injectors
 
-`build_main_problem!` checks available, modeled components:
+Before constructing regional optimization problems, `build_main_problem!` checks
+available, modeled components:
 
   - A static injector assigned to a subsystem must have its attached bus in that
     subsystem, or construction raises `ConflictingInputsError`.
   - If a supported two-terminal HVDC type is modeled, both terminal buses must
     belong to the HVDC component's subsystem. A cross-subsystem terminal assignment
-    fails the build. Omitting the HVDC model bypasses this modeling check; it does
-    **not** model the interregional HVDC transfer.
+    fails the build.
+  - With `SplitAreaPTDFPowerModel`, each modeled HVDC terminal bus's area must also
+    be assigned to that subsystem. Moving a bus's subsystem membership does not
+    change its area or assign that area to the subsystem. Missing terminal-area
+    membership raises `ConflictingInputsError` before regional variables are built.
+    For example, an HVDC connecting areas `1` and `3` can be internal to subsystem
+    `a` when both areas and their terminal buses are assigned to `a`.
+
+Omitting the HVDC model bypasses these HVDC modeling checks; it does **not** model
+the interregional HVDC transfer.
 
 `test/test_hvdc.jl` covers these build success/failure cases. The checks do not
 prove complete coverage, disjoint ownership, or conservation for an arbitrary
